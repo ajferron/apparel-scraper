@@ -6,13 +6,16 @@ const puppeteer = require('puppeteer');
 const lib = require('./../lib')
 const Promise = require('bluebird');
 const PORT = 3050;
+var browser;
+
+const express = require('express')
+const app = express()
 
 describe('elastic service', function() {
 
   before(async function() {
-    var browser = await puppeteer.launch({
-      headless: false,
-      //slowMo: 550
+    browser = await puppeteer.launch({
+      headless: true
     });
 
     page = await browser.newPage();
@@ -24,9 +27,6 @@ describe('elastic service', function() {
 
     var userAgent = 'TestAgent'
     await page.setUserAgent(userAgent);
-
-    const express = require('express')
-    const app = express()
     app.get('/', (req, res) => {
       res.send('<p>Hello World!</p>');
     })
@@ -41,6 +41,10 @@ describe('elastic service', function() {
         return resolve();
       })
     })
+  })
+
+  after(async function() {
+    await browser.close();
   })
 
   it('open page and check results', async function test() {

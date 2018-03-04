@@ -44,10 +44,10 @@ app.use(bodyParser.urlencoded({
     height: 1768
   });
 
-  var userAgent = process.env.userAgent || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36'
-  await page.setUserAgent(userAgent);
+  if (process.env.userAgent) {
+    await page.setUserAgent(process.env.userAgent);
+  }
   console.log('browser loaded');
-
 })();
 
 app.get('/', async (req, res) => {
