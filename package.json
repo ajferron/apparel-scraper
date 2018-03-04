@@ -1,0 +1,34 @@
+{
+  "name": "web-to-json",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "npm start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/digestoo/web-to-json.git"
+  },
+  "author": "Mateusz Rzepa",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/digestoo/web-to-json/issues"
+  },
+  "homepage": "https://github.com/digestoo/web-to-json#readme",
+  "dependencies": {
+    "bluebird": "^3.5.1",
+    "body-parser": "^1.18.2",
+    "cheerio": "^1.0.0-rc.2",
+    "express": "^4.16.2",
+    "fs": "0.0.1-security",
+    "lodash": "^4.17.5",
+    "puppeteer": "^1.1.1"
+  },
+  "devDependencies": {
+    "assert": "^1.4.1",
+    "mocha": "^5.0.1",
+    "server": "^1.0.18",
+    "superagent": "^3.8.2"
+  }
+}
