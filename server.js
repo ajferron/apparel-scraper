@@ -30,7 +30,6 @@ app.use(bodyParser.urlencoded({
     executablePath: executablePath,
     args: [
       '--disable-dev-shm-usage',
-
       // eventually should be removed
       '--no-sandbox',
       '--disable-setuid-sandbox'
