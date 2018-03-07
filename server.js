@@ -15,18 +15,25 @@ app.use(bodyParser.urlencoded({
 
 (async () => {
 
-  var executablePath;
+  var executablePath = process.env.EXECUTABLE_PATH;
 
-  try {
-    fs.accessSync('/usr/bin/chromium-browser');
-    executablePath = '/usr/bin/chromium-browser';
-  } catch (err) {
+  if (!executablePath) {
+    try {
+      fs.accessSync('/usr/bin/chromium-browser');
+      executablePath = '/usr/bin/chromium-browser';
+    } catch (e) {
+    }
   }
 
-  const browser = await puppeteer.launch({
-    //headless: false,
-    headless: true,
-    slowMo: 250,
+  var headless = true;
+
+  if (process.env.HEADLESS === 'false') {
+    headless = false;
+  }
+
+  var options = {
+    headless: headless,
+    slowMo: process.env.SLOW_MO || 250,
     executablePath: executablePath,
     args: [
       '--disable-dev-shm-usage',
@@ -34,19 +41,27 @@ app.use(bodyParser.urlencoded({
       '--no-sandbox',
       '--disable-setuid-sandbox'
     ]
-  });
+  }
 
-  page = await browser.newPage();
+  if (process.env.USER_DATA_DIR) {
+    options.userDataDir = process.env.USER_DATA_DIR;
+  }
+
+  const browser = await puppeteer.launch(options);
+
+  var pages = await browser.pages()
+  page = pages[0];
 
   await page.setViewport({
     width: 1366,
     height: 1768
   });
 
-  if (process.env.userAgent) {
-    await page.setUserAgent(process.env.userAgent);
+  if (process.env.USER_AGENT) {
+    await page.setUserAgent(process.env.USER_AGENT);
   }
-  console.log('browser loaded');
+
+  console.log('Browser loaded');
 })();
 
 app.get('/', async (req, res) => {
@@ -59,7 +74,7 @@ app.get('/', async (req, res) => {
   }
 
   var result = await lib(page, options);
-  res.json(result)
+  res.json(result);
 })
 
 module.exports = app;
