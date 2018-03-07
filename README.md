@@ -40,3 +40,10 @@ docker run -it -p 8080:8080 cigolpl/web-scraper
 ```bash
 curl -XGET -H "Content-Type: application/json" -d '{"url":"'http://stackoverflow.com/questions/3207418/crawler-vs-scraper'","pageFunction":"function($) { return { title: $(\"title\").text() }}","userAgent":"WebScraper"}' http://localhost:8080
 ```
+
+Body params:
+
+- `url`
+- `pageFunction` - function having jQuery context responsible for extracting data
+- `delay` - delay between requests in ms
+- `userAgent`
