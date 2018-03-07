@@ -19,12 +19,14 @@ PORT=8080 npm start
 
 You can use additional environment variables once running API with npm:
 
-- `EXECUTABLE_PATH` - path to custom google chrome (you can find it in chrome://version)
+- `EXECUTABLE_PATH` - path to custom google chrome (you can find it in `chrome://version`)
 - `USER_DATA_DIR` - path to user profile
 - `SLOW_MO` - slow down operations by specified amount of ms
 - `HEADLESS=false` - run server in headfull mode
 - `USER_AGENT` - global user agent
 - `PORT`
+
+If you have any problem with running on your local machine - this page -> https://github.com/GoogleChrome/puppeteer/blob/master/docs/troubleshooting.md might be helpful.
 
 ### Docker
 
