@@ -24,7 +24,7 @@ RUN yarn
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
 
 # Use Puppeteer 0.11.0 b/c it bundles Chromium 63.
-RUN yarn add puppeteer@0.11.0
+RUN yarn add puppeteer@1.2.0
 
 RUN addgroup -S pptruser && adduser -S -g pptruser pptruser \
     && mkdir -p /home/pptruser/Downloads \
