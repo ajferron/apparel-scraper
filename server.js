@@ -64,7 +64,7 @@ app.use(bodyParser.urlencoded({
   console.log('Browser loaded');
 })();
 
-app.get('/', async (req, res) => {
+app.all('/', async (req, res) => {
 
   var options = {
     url: req.body.url || 'http://localhost:3050',
