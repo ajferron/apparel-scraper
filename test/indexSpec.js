@@ -15,24 +15,14 @@ describe('elastic service', function() {
 
   before(async function() {
     browser = await puppeteer.launch({
-      headless: true
+      headless: false
     });
 
-    page = await browser.newPage();
-
-    await page.setViewport({
-      width: 1366,
-      height: 1768
-    });
-
-    var userAgent = 'TestAgent'
-    await page.setUserAgent(userAgent);
     app.get('/', (req, res) => {
       res.send('<p>Hello World!</p>');
     })
 
     app.get('/agent', (req, res) => {
-      //console.log(req.headers);
       res.send(`<p>${req.headers['user-agent']}</p>`);
     })
 
@@ -49,31 +39,44 @@ describe('elastic service', function() {
 
   it('open page and check results', async function test() {
 
-    var result = await lib(page, {
+    var result = await lib(browser, {
       url: `http://127.0.0.1:${PORT}`
     })
+
+    var pages = await browser.pages();
+    assert.equal(1, pages.length);
+
     assert.equal(result, '<html><head></head><body><p>Hello World!</p></body></html>');
   })
 
   it('open page and check results', async function test() {
 
-    var result = await lib(page, {
+    var result = await lib(browser, {
       url: `http://127.0.0.1:${PORT}`,
       pageFunction: function($) {
         return $('p').text();
       }
     })
+
+    var pages = await browser.pages();
+    assert.equal(1, pages.length);
+
     assert.equal(result, 'Hello World!');
   })
 
   it('open page and check user agent', async function test() {
 
-    var result = await lib(page, {
+    var result = await lib(browser, {
       url: `http://127.0.0.1:${PORT}/agent`,
+      userAgent: 'TestAgent',
       pageFunction: function($) {
         return $('p').text();
       }
     })
+
+    var pages = await browser.pages();
+    assert.equal(1, pages.length);
+
     assert.equal(result, 'TestAgent');
   })
 })

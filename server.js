@@ -5,13 +5,13 @@ const puppeteer = require('puppeteer');
 const Promise = require('bluebird');
 const fs = require('fs');
 
-var page;
-
 const bodyParser = require('body-parser')
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
   extended: true
 }));
+
+var browser;
 
 (async () => {
 
@@ -47,19 +47,7 @@ app.use(bodyParser.urlencoded({
     options.userDataDir = process.env.USER_DATA_DIR;
   }
 
-  const browser = await puppeteer.launch(options);
-
-  var pages = await browser.pages()
-  page = pages[0];
-
-  await page.setViewport({
-    width: 1366,
-    height: 1768
-  });
-
-  if (process.env.USER_AGENT) {
-    await page.setUserAgent(process.env.USER_AGENT);
-  }
+  browser = await puppeteer.launch(options);
 
   console.log('Browser loaded');
 })();
@@ -73,7 +61,7 @@ app.all('/', async (req, res) => {
     userAgent: req.body.userAgent
   }
 
-  var result = await lib(page, options);
+  var result = await lib(browser, options);
   res.json(result);
 })
 

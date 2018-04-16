@@ -18,19 +18,28 @@ const defaultCheerioOptions = {
  * screenshot path | or false
  * there should be lock function which forbid async working (or queue)
  */
-module.exports = async function(page, options) {
+module.exports = async function(browser, options) {
+
+  var page = await browser.newPage();
+
+  await page.setViewport({
+    width: 1366,
+    height: 1768
+  });
 
   options = options || {};
-
-  if (!options.url) {
-    throw new Error('Please provide url');
-  }
-
 
   if (options.userAgent) {
     await page.setUserAgent(options.userAgent);
   }
 
+  if (!options.url) {
+    throw new Error('Please provide url');
+  }
+
+  if (options.userAgent) {
+    await page.setUserAgent(options.userAgent);
+  }
 
   if (options.cookies) {
     await Promise.all(options.cookies).map(async cookie => {
@@ -43,15 +52,14 @@ module.exports = async function(page, options) {
 
   //await page.screenshot({path: './example.png'});
 
-  console.log(await page.cookies());
-
   var html = await page.content();
 
   if (options.pageFunction) {
     var $ = cheerio.load(html, defaultCheerioOptions);
+    await page.close();
     return options.pageFunction($);
   }
 
-
+  await page.close();
   return html;
 }
