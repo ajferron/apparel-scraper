@@ -24,6 +24,7 @@
     "express": "^4.16.2",
     "fs": "0.0.1-security",
     "lodash": "^4.17.5",
+    "proxy-chain": "^0.2.3",
     "puppeteer": "^1.3.0"
   },
   "devDependencies": {

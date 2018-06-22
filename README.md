@@ -19,6 +19,7 @@ PORT=8080 npm start
 
 You can use additional environment variables once running API with npm:
 
+- `PROXY_URL` - proxy url in format like http://username:password@ip:port
 - `EXECUTABLE_PATH` - path to custom google chrome (you can find it in `chrome://version`)
 - `USER_DATA_DIR` - path to user profile
 - `SLOW_MO` - slow down operations by specified amount of ms

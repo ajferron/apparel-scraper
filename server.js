@@ -4,6 +4,7 @@ const lib = require('./lib')
 const puppeteer = require('puppeteer');
 const Promise = require('bluebird');
 const fs = require('fs');
+const proxyChain = require('proxy-chain');
 
 const bodyParser = require('body-parser')
 app.use(bodyParser.json());
@@ -31,16 +32,23 @@ var browser;
     headless = false;
   }
 
+  var args = [
+    '--disable-dev-shm-usage',
+    // eventually should be removed
+    '--no-sandbox',
+    '--disable-setuid-sandbox'
+  ];
+
+  if (process.env.PROXY_URL) {
+    const newProxyUrl = await proxyChain.anonymizeProxy(process.env.PROXY_URL);
+    args.push(`--proxy-server=${newProxyUrl}`);
+  }
+
   var options = {
     headless: headless,
     slowMo: process.env.SLOW_MO || 250,
     executablePath: executablePath,
-    args: [
-      '--disable-dev-shm-usage',
-      // eventually should be removed
-      '--no-sandbox',
-      '--disable-setuid-sandbox'
-    ]
+    args: args
   }
 
   if (process.env.USER_DATA_DIR) {
