@@ -5,12 +5,26 @@ const Promise = require('bluebird');
 
 const express = require('express')
 const app = express()
+const cookieParser = require('cookie-parser')
+const session = require('express-session')
+
+app.use(cookieParser())
+
+app.use(session({
+  secret: 'keyboard cat',
+  //resave: false,
+  //saveUninitialized: true,
+  cookie: {
+    maxAge: 60000
+  }
+}))
+
 const server = require('./../server')
 const PORT = 3050;
 const PORT2 = 3051;
 const request = require('superagent');
 
-describe('elastic service', function() {
+describe('basic web-scraper tests', function() {
 
   before(async function() {
 
@@ -20,6 +34,10 @@ describe('elastic service', function() {
 
     app.get('/agent', (req, res) => {
       res.send(`<p>${req.headers['user-agent']}</p>`);
+    })
+
+    app.get('/cookies', (req, res) => {
+      res.send(`<p>${req.cookies['connect.sid']}</p>`);
     })
 
     await new Promise(resolve => {
@@ -61,6 +79,55 @@ describe('elastic service', function() {
     })
     .end((err, res) => {
       assert.equal(res.body, 'TestAgent');
+      done();
+    });
+  })
+
+  var sid;
+
+  it('opens page and checks cookies', function test(done) {
+
+    request
+    .get('http://localhost:3051')
+    .send({
+      url: 'http://localhost:3050/cookies',
+      noCookies: false,
+      pageFunction: 'function($) { return $("p").text(); }'
+    })
+    .end((err, res) => {
+      sid = res.body;
+      assert.equal(true, !!res.body);
+      done();
+    });
+  })
+
+  it('opens page and checks cookies again', function test(done) {
+
+    request
+    .get('http://localhost:3051')
+    .send({
+      url: 'http://localhost:3050/cookies',
+      noCookies: true,
+      pageFunction: 'function($) { return $("p").text(); }'
+    })
+    .end((err, res) => {
+      assert.equal(res.body, 'undefined');
+      done();
+    });
+  })
+
+  it('opens page and checks different cookies again', function test(done) {
+
+    request
+    .get('http://localhost:3051')
+    .send({
+      url: 'http://localhost:3050/cookies',
+      noCookies: false,
+      pageFunction: 'function($) { return $("p").text(); }'
+    })
+    .end((err, res) => {
+      assert.equal(true, !!res.body);
+      assert.notEqual(sid, res.body);
       done();
     });
   })

@@ -39,6 +39,8 @@ var browser;
     '--disable-setuid-sandbox'
   ];
 
+  //--disk-cache-size=0
+
   if (process.env.PROXY_URL) {
     const newProxyUrl = await proxyChain.anonymizeProxy(process.env.PROXY_URL);
     args.push(`--proxy-server=${newProxyUrl}`);
@@ -66,6 +68,7 @@ app.all('/', async (req, res) => {
     url: req.body.url || 'http://localhost:3050',
     pageFunction: eval(`(${req.body.pageFunction})`),
     delay: req.body.delay,
+    noCookies: req.body.noCookies,
     userAgent: req.body.userAgent
   }
 

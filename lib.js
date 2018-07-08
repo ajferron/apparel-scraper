@@ -29,8 +29,8 @@ module.exports = async function(browser, options) {
 
   options = options || {};
 
-  if (options.userAgent) {
-    await page.setUserAgent(options.userAgent);
+  if (options.noCookies) {
+    await page._client.send('Network.clearBrowserCookies');
   }
 
   if (!options.url) {
@@ -59,6 +59,8 @@ module.exports = async function(browser, options) {
     await page.close();
     return options.pageFunction($);
   }
+
+
 
   await page.close();
   return html;

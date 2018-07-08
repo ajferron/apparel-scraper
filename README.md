@@ -48,3 +48,4 @@ Body params:
 - `pageFunction` - function having jQuery context responsible for extracting data
 - `delay` - delay between requests in ms
 - `userAgent`
+- `noCookies`
