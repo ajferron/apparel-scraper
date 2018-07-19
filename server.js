@@ -76,4 +76,8 @@ app.all('/', async (req, res) => {
   res.json(result);
 })
 
+app.get('/status', async (req, res) => {
+  res.json({});
+})
+
 module.exports = app;
