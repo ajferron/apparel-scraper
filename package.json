@@ -31,7 +31,7 @@
     "assert": "^1.4.1",
     "cookie-parser": "^1.4.3",
     "express-session": "^1.15.6",
-    "mocha": "^3.4.2",
+    "mocha": "^5.2.0",
     "server": "^1.0.18",
     "superagent": "^3.8.2"
   }
