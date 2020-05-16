@@ -7,8 +7,11 @@
 
 import scrapy
 
-
-class SupplierScraperItem(scrapy.Item):
-    # define the fields for your item here like:
-    # name = scrapy.Field()
-    pass
+class ProductItem(scrapy.Item):
+    sku = scrapy.Field()
+    name = scrapy.Field()
+    colors = scrapy.Field()
+    description = scrapy.Field()
+    images = scrapy.Field()
+    image_urls = scrapy.Field()
+    
