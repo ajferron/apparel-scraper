@@ -13,6 +13,7 @@ sanmar_login = {
     'send': ''
 }
 
+
 class ProductSpider(scrapy.Spider):
     name = "products"
 
@@ -40,7 +41,21 @@ class ProductSpider(scrapy.Spider):
         
         return [scrapy.Request(url=url, meta={'product': False}) for url in self.start_urls]
 
+
     def parse(self, response):
+        if (response.meta.get('product', False)):
+            yield self.parse_product(response)
+
+        else:
+            for product in response.css('.products-grid .item'):
+                name = product.css('h2 a::text').get()
+                url = product.css('h2 a::attr(href)').get()
+
+                if 'DISCONTINUED' not in name:
+                    yield scrapy.Request(url=url, meta={'product': True}, callback=self.parse)
+
+
+    def parse_product(self, response):
         name = response.css('.product-name h1::text').get()
         desc = response.css('.short-description .std ul').get().replace("\n", "")
         imgs = response.css('#itemslider-zoom')[0]
