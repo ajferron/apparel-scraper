@@ -8,8 +8,8 @@ from ..items import ProductItem
 sanmar_login = {
     'w3exec': 'login', 
     'customerNo': '27539',
-    'email': 'email',
-    'password': 'pass', 
+    'email': 'alvinferron@gmail.com',
+    'password': 'Ferrez23', 
     'send': ''
 }
 
@@ -63,5 +63,19 @@ class ProductSpider(scrapy.Spider):
         urls = imgs.css(".item a::attr(href)").getall()
         clrs = imgs.css('.item a::attr(title)').getall()
         sku = name.split('.')[1].replace(' ', '').lower()
+        
+        sizes = response.css('.productgrid .header')[0].css('td::text').getall()[2:]
+        prices = response.css('.productgrid .body')[0].css('.price::text').getall()
 
-        return ProductItem(name=name, sku=sku, description=desc, colors=clrs, image_urls=urls)
+        self.logger.info("[!] TEST OUTPUT")
+        self.logger.info(sizes)
+        self.logger.info(prices)
+
+        return ProductItem(
+            name=name, 
+            sku=sku, 
+            description=desc, 
+            colors=clrs, 
+            image_urls=urls, 
+            sizes=dict(zip(sizes, prices))
+        )
