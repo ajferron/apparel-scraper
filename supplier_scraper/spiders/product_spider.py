@@ -15,14 +15,15 @@ sanmar_login = {
 
 
 class ProductSpider(scrapy.Spider):
+
     name = "products"
 
     custom_settings = {
         "IMAGES_STORE": 'images',
         "DOWNLOAD_DELAY": 1,
         "ITEM_PIPELINES": {
-            'supplier_scraper.pipelines.ProductImagePipeline': 100
-
+            'supplier_scraper.pipelines.ProductImagePipeline': 100,
+            'supplier_scraper.pipelines.JsonWriterPipeline': 200
         }
     }
 
