@@ -1,6 +1,7 @@
 import scrapy
 import json
 from datetime import datetime
+from webdav.client import Client
 from scrapy.pipelines.images import ImagesPipeline
 
 
@@ -18,8 +19,8 @@ class ProductImagePipeline(ImagesPipeline):
     def file_path(self, request, response=None, info=None):
         i = request.meta['num']
         sku = request.meta['sku'].lower()
-        ext = request.url.split('.')[-1]
         clr = request.meta['color'].lower()
+        ext = request.url.split('.')[-1]
 
         if (request.meta['num'] == 0):
             return f"{sku}-thumbnail.{ext}"
@@ -33,7 +34,7 @@ class JsonWriterPipeline():
 
     def open_spider(self, spider):
         self.json = {'items': []}
-        date = datetime.now().strftime("%d-%m-%Y_%I:%M%p")
+        date = datetime.now().strftime("%d-%m-%Y_%I:%M:%S%p")
         self.file = open(f'Products_{date}.json', 'w')
 
 
@@ -44,13 +45,36 @@ class JsonWriterPipeline():
 
     def process_item(self, item, spider):
         urls = map(lambda img : img['path'], item['images'])
-        colors = zip(item['colors'], [url for url in urls])
-        item['swatches'] = [{'color': clr, 'image': url} for clr, url in colors]
+        swatches = zip(item['colors'], [url for url in urls])
+        item['swatches'] = [{'color': clr, 'image': url} for clr, url in swatches]
 
         del item['colors']
         del item['images']
         del item['image_urls']
 
         self.json['items'].append(dict(item))
+
+        return item
+
+
+
+class WebDavPipeline():
+
+    def open_spider(self, spider):
+        self.client = Client({
+            'webdav_hostname': "https://www.adventnorthcanada.com/dav",
+            'webdav_root': "dav",
+            'webdav_login': "alvin@adventnorthcanada.com",
+            'webdav_password': "30d4ffdaa63d30b2aa484f99f5a9e5d126e12d15e29276dd6dca45b9dd80eec1"
+        })
+
+        Client({'webdav_hostname': "https://www.adventnorthcanada.com/",'webdav_root': "dav",'webdav_login': "alvin@adventnorthcanada.com",'webdav_password': "30d4ffdaa63d30b2aa484f99f5a9e5d126e12d15e29276dd6dca45b9dd80eec1"})
+        
+        self.client.verify = False
+
+    def process_item(self, item, spider):
+        for swatch in item['swatches']:
+            self.client.upload_sync(remote_path=f'/dav/product_images/import/{swatch["image"]}', local_path=f'images/{swatch["image"]}')
+            client.upload_sync(remote_path='/dav/product_images/import/l4022-black.jpg', local_path='images/l4022-black.jpg')
 
         return item

@@ -23,7 +23,8 @@ class ProductSpider(scrapy.Spider):
         "DOWNLOAD_DELAY": 1,
         "ITEM_PIPELINES": {
             'supplier_scraper.pipelines.ProductImagePipeline': 100,
-            'supplier_scraper.pipelines.JsonWriterPipeline': 200
+            'supplier_scraper.pipelines.JsonWriterPipeline': 200,
+            'supplier_scraper.pipelines.WebDavPipeline': 300,
         }
     }
 

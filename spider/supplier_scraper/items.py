@@ -11,6 +11,7 @@ class ProductItem(scrapy.Item):
     sku = scrapy.Field()
     name = scrapy.Field()
     colors = scrapy.Field()
+    sizes = scrapy.Field()
     swatches = scrapy.Field()
     description = scrapy.Field()
     images = scrapy.Field()

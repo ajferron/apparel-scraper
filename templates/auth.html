@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+
+<html>
+
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../static/main.css">
+    <title> Apparel Scraper Authorization </title>
+</head>
+
+<body>
+    <form action="/submit" method="POST">
+        <fieldset>
+            <div class="scope"></div>
+        </fieldset>
+
+        {% if message %}
+            <p class="message"> {{ message | safe  }} </p>
+        {% endif %}
+        
+        <input type="text" name="name" placeholder="Name"/>
+ 
+        <input type="submit" value="Authorize"/>
+    </form>
+</body>
+
+
+</html>
