@@ -1,7 +1,6 @@
 import scrapy
 import json
 from datetime import datetime
-from webdav.client import Client
 from scrapy.pipelines.images import ImagesPipeline
 
 
@@ -53,28 +52,5 @@ class JsonWriterPipeline():
         del item['image_urls']
 
         self.json['items'].append(dict(item))
-
-        return item
-
-
-
-class WebDavPipeline():
-
-    def open_spider(self, spider):
-        self.client = Client({
-            'webdav_hostname': "https://www.adventnorthcanada.com/dav",
-            'webdav_root': "dav",
-            'webdav_login': "alvin@adventnorthcanada.com",
-            'webdav_password': "30d4ffdaa63d30b2aa484f99f5a9e5d126e12d15e29276dd6dca45b9dd80eec1"
-        })
-
-        Client({'webdav_hostname': "https://www.adventnorthcanada.com/",'webdav_root': "dav",'webdav_login': "alvin@adventnorthcanada.com",'webdav_password': "30d4ffdaa63d30b2aa484f99f5a9e5d126e12d15e29276dd6dca45b9dd80eec1"})
-        
-        self.client.verify = False
-
-    def process_item(self, item, spider):
-        for swatch in item['swatches']:
-            self.client.upload_sync(remote_path=f'/dav/product_images/import/{swatch["image"]}', local_path=f'images/{swatch["image"]}')
-            client.upload_sync(remote_path='/dav/product_images/import/l4022-black.jpg', local_path='images/l4022-black.jpg')
 
         return item

@@ -1,5 +1,5 @@
 import scrapy
-from ..items import ProductItem
+from scraper.items import ProductItem
 
 # php -S localhost:8080
 # scrapy crawl products
@@ -7,9 +7,9 @@ from ..items import ProductItem
 
 sanmar_login = {
     'w3exec': 'login', 
-    'customerNo': '27539',
-    'email': 'alvinferron@gmail.com',
-    'password': 'Ferrez23', 
+    'customerNo': '',
+    'email': '',
+    'password': '', 
     'send': ''
 }
 
@@ -22,9 +22,8 @@ class ProductSpider(scrapy.Spider):
         "IMAGES_STORE": 'images',
         "DOWNLOAD_DELAY": 1,
         "ITEM_PIPELINES": {
-            'supplier_scraper.pipelines.ProductImagePipeline': 100,
-            'supplier_scraper.pipelines.JsonWriterPipeline': 200,
-            'supplier_scraper.pipelines.WebDavPipeline': 300,
+            'scraper.pipelines.ProductImagePipeline': 100,
+            'scraper.pipelines.JsonWriterPipeline': 200
         }
     }
 
@@ -34,7 +33,6 @@ class ProductSpider(scrapy.Spider):
             formdata = sanmar_login,
             callback = self.after_login
         )]
-
 
     def after_login(self, response):
         if 'login' in response.url:
@@ -67,10 +65,6 @@ class ProductSpider(scrapy.Spider):
         
         sizes = response.css('.productgrid .header')[0].css('td::text').getall()[2:]
         prices = response.css('.productgrid .body')[0].css('.price::text').getall()
-
-        self.logger.info("[!] TEST OUTPUT")
-        self.logger.info(sizes)
-        self.logger.info(prices)
 
         return ProductItem(
             name=name, 
