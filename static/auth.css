@@ -1,0 +1,46 @@
+form {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 275px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+form h3 {
+    margin: 15px 0 20px;
+}
+
+#scope-wrapper {
+    background-color: var(--light);
+    border-radius: 10px;
+    padding: 30px;
+    margin: 35px 0;
+    width: 100%
+}
+
+#scope-wrapper .scope {
+    display: flex;
+    align-items: center;
+}
+
+#scope-wrapper .scope:first-child {
+    margin-bottom: 25px;
+}
+
+#scope-wrapper .icon-wrapper {
+    width: 30px;
+}
+
+#scope-wrapper .scope .scope-info {
+    display: flex;
+    flex-direction: column;
+    margin-left: 20px;
+}
+
+#scope-wrapper .scope .scope-info .scope-name {
+    font-weight: 900;
+}
+

@@ -6,23 +6,50 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro">
     <link rel="stylesheet" href="../static/main.css">
+    <link rel="stylesheet" href="../static/auth.css">
+
     <title> Apparel Scraper Authorization </title>
 </head>
 
 <body>
-    <form action="/submit" method="POST">
-        <fieldset>
-            <div class="scope"></div>
-        </fieldset>
+    <form action="/authorize" method="POST">
+        <header>
+            <img src="icons/auth-head.svg" alt="">
+        </header>
+
+        <h2> Authorize Apparel Scraper </h2>
+
+        <div id="scope-wrapper">
+            <div class="scope">
+                <div class="icon-wrapper">
+                    <img src="icons/bag.svg" alt="">
+                </div>
+
+                <div class="scope-info">
+                    <span class="scope-name"> Products </span>
+                    <span class="scope-access"> Modify </span>
+                </div>
+            </div>
+
+            <div class="scope">
+                <img src="icons/user.svg" alt="">
+
+                <div class="scope-info">
+                    <span class="scope-name"> Basic Information </span>
+                    <span class="scope-access"> Read Only </span>
+                </div>
+            </div>
+        </div>
 
         {% if message %}
             <p class="message"> {{ message | safe  }} </p>
         {% endif %}
-        
-        <input type="text" name="name" placeholder="Name"/>
- 
-        <input type="submit" value="Authorize"/>
+
+        <input type="hidden" name="id" value="{{ id }}">
+
+        <input type="submit" class="solid-btn" value="Authorize"/>
     </form>
 </body>
 
