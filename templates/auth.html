@@ -6,6 +6,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro">
     <link rel="stylesheet" href="../static/main.css">
     <link rel="stylesheet" href="../static/auth.css">
@@ -14,7 +15,7 @@
 </head>
 
 <body>
-    <form action="/authorize" method="POST">
+    <form id="auth-form" class="center" action="/authorize" method="POST">
         <header>
             <img src="icons/auth-head.svg" alt="">
         </header>
@@ -43,11 +44,7 @@
             </div>
         </div>
 
-        {% if message %}
-            <p class="message"> {{ message | safe  }} </p>
-        {% endif %}
-
-        <input type="hidden" name="id" value="{{ id }}">
+        <input type="hidden" name="uuid" value="{{ uuid }}">
 
         <input type="submit" class="solid-btn" value="Authorize"/>
     </form>

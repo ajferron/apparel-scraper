@@ -4,8 +4,21 @@
     font-family: 'Source Sans Pro', serif;
 
     --main: #4A4756;
-    --light: #EBEEF5;
-    --lighter: #F7F8FA;
+    --light: #A4A5BC;
+    --lighter: #EBEEF5;
+    --lightest: #F7F8FA;
+
+    color: var(--main)
+}
+
+form.center {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 button, input[type="submit"] {
@@ -17,10 +30,12 @@ button, input[type="submit"] {
     cursor: pointer;
 }
 
+
+
 button.solid-btn,
-input[type="submit"].solid-btn {
+input.solid-btn {
     background: var(--main);
-    border-radius: 10px;
+    border-radius: 5px;
     padding: 10px;
     font-size: 16px;
     color: white;
@@ -28,6 +43,24 @@ input[type="submit"].solid-btn {
     transition: all ease 0.25s;
 }
 
-.solid-btn:hover {
-    box-shadow: 0px 0px 15px #9895A6;
+button.solid-btn:hover,
+input.solid-btn:hover {
+    box-shadow: 0px 0px 10px #9895A6;
+}
+
+
+
+input.ghost {
+    box-sizing: border-box;
+    border: 1px solid var(--main);
+    border-radius: 5px;
+    background-color: var(--lightest);
+    width: 100%;
+    height: 40px;
+    padding: 10px;
+    font-size: 18px;
+}
+
+input.ghost:focus {
+    outline: none;
 }

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+
+<html>
+
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro">
+    <link rel="stylesheet" href="../static/main.css">
+    <link rel="stylesheet" href="../static/home.css">
+
+    <title> Apparel Scraper </title>
+</head>
+
+<body>
+    <form id="main-form" class="center" action="/submit" method="POST">
+        <header>
+            <h1> Import Products </h1>
+        </header>
+
+        <input class="ghost" type="text" name="url" placeholder="URL" required/>
+
+        <div class="multi-btn">
+            <div class="item single active"> Single Product </div>
+            <div class="item page"> Page of Products </div>
+        </div>
+
+        <div id="site-login">
+            <div class="title">
+                <span> Site Login </span>
+                <input type="checkbox"/>
+            </div>
+
+            <div class="input-wrapper">
+                <div class="labelled-input">
+                    <span class="label"> ID </span>
+                    <input class="ghost" type="text" name="ID" required/>
+                </div>
+
+                <div class="labelled-input">
+                    <span class="label"> Email </span>
+                    <input class="ghost" type="text" name="Email" required/>
+                </div>
+
+                <div class="labelled-input">
+                    <span class="label"> Password </span>
+                    <input class="ghost" type="password" name="Password" required/>
+                </div>
+            </div>
+        </div>
+
+        {% if message %}
+            <p class="message"> {{ message | safe  }} </p>
+        {% endif %}
+        
+        <input type="submit" class="solid-btn" value="Submit"/>
+    </form>
+</body>
+
+
+</html>
