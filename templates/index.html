@@ -7,15 +7,18 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="../static/js/index.js"></script>
+
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro">
-    <link rel="stylesheet" href="../static/main.css">
-    <link rel="stylesheet" href="../static/home.css">
+    <link rel="stylesheet" href="../static/css/main.css">
+    <link rel="stylesheet" href="../static/css/home.css">
 
     <title> Apparel Scraper </title>
 </head>
 
 <body>
-    <form id="main-form" class="center" action="/submit" method="POST">
+    <form id="import-form" class="center" action="/import" method="POST">
         <header>
             <h1> Import Products </h1>
         </header>
@@ -23,8 +26,8 @@
         <input class="ghost" type="text" name="url" placeholder="URL" required/>
 
         <div class="multi-btn">
-            <div class="item single active"> Single Product </div>
-            <div class="item page"> Page of Products </div>
+            <input id="import-type" type="hidden" name="import-type" value="single-import">
+            <div id="single-import" class="item active"> Single Product </div><div id="page-import" class="item"> Page of Products </div>
         </div>
 
         <div id="site-login">
@@ -36,17 +39,17 @@
             <div class="input-wrapper">
                 <div class="labelled-input">
                     <span class="label"> ID </span>
-                    <input class="ghost" type="text" name="ID" required/>
+                    <input class="ghost" type="text" name="id" required/>
                 </div>
 
                 <div class="labelled-input">
                     <span class="label"> Email </span>
-                    <input class="ghost" type="text" name="Email" required/>
+                    <input class="ghost" type="text" name="email" required/>
                 </div>
 
                 <div class="labelled-input">
                     <span class="label"> Password </span>
-                    <input class="ghost" type="password" name="Password" required/>
+                    <input class="ghost" type="password" name="password" required/>
                 </div>
             </div>
         </div>
