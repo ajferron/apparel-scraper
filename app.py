@@ -1,78 +1,142 @@
-from flask import Flask , render_template, request, jsonify, redirect, url_for
+from flask import Flask, request, session, render_template, make_response, jsonify, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from scrapy.crawler import CrawlerRunner
 from scrapy.signalmanager import dispatcher
 from scrapy import signals
 from scraper import ProductSpider
+from uuid import uuid4
+import hmac, hashlib, base64
+import dotenv
 import crochet
 import requests
 import json
-import time
+import os
 
 
 app = Flask(__name__)
 
+if os.path.exists('.env'):
+    dotenv.load_dotenv('.env')
+
+app.config['APP_CLIENT_ID'] = os.getenv('APP_CLIENT_ID')
+app.config['APP_CLIENT_SECRET'] = os.getenv('APP_CLIENT_SECRET')
+app.config['SESSION_SECRET'] = os.getenv('SESSION_SECRET')
+app.config['SQLALCHEMY_DATABASE_URI'] = ''
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+
+def verify_payload(signed_payload, client_secret):
+    encoded_json, encoded_hmac = signed_payload.split('.')
+    
+    dc_json = base64.b64decode(encoded_json)
+    signature = base64.b64decode(encoded_hmac)
+    
+    expected_sig = hmac.new(client_secret.encode(), base64.b64decode(encoded_json), hashlib.sha256).hexdigest()
+    authorized = hmac.compare_digest(signature, expected_sig.encode())
+
+    return json.loads(dc_json.decode()) if authorized else False
+
+
+def _item_processed(item, response, spider):
+    # items.append(dict(item))
+    pass
+
+
+def client_id():
+    return app.config['APP_CLIENT_ID']
+
+
+def client_secret():
+    return app.config['APP_CLIENT_SECRET']
+
+
+def session_secret():
+    return app.config['SESSION_SECRET']
+
+
+
+app.secret_key = session_secret()
+
 runner = CrawlerRunner()
+db = SQLAlchemy(app)
 
 crochet.setup()
 
-output = []
 
 def parse_user(json):
     print('RESPONSE')
     print(json)
-    print(json['access_token'])
-    print(json['scope'])
-    print(json['user'].get('id'))
-    print(json['user'].get('username'))
-    print(json['user'].get('email'))
-    print(json['context'])
+
+    token = json['access_token']
+    scope = json['scope']
+    user_id = json['user'].get('id')
+    user_name = json['user'].get('username')
+    user_email = json['user'].get('email')
+    store_hash = json['context']
 
 
 @app.route('/')
 def index():
-    return render_template('index.html')
-
-
-@app.route('/submit', methods=['POST'])
-def submit():
-    url = request.form['url']
-
-    if len(url):
-        return redirect(url_for('scrape', url=url))
+    payload = request.args.get('signed_payload', '')
+    data = verify_payload(payload, client_secret())
+    session['data'] = data
 
     return render_template('index.html')
+
 
 
 @app.route('/auth')
 def auth():
-    temp_auth = {
+    session['temp_auth'] = {
         'code': request.args.get('code', ''),
         'scope': request.args.get('scope', ''),
         'context': request.args.get('context', '')
     }
 
-    # Huge vulnerability, could be used to intercept auth token
-    # Generate random keys to add encryption keys as values to a dict
-    # Send the dict key to the template, extract it to access the decryption key
-    return render_template('auth.html', auth=json.dumps(temp_auth))
+    return render_template('auth.html')
+
+
+
+@app.route('/uninstall')
+def uninstall():
+    return render_template('uninstall.html')
+
+
+
+@app.route('/submit_import', methods=['POST'])
+def submit_import():
+    session['scrape'] = {
+        'url': request.form['url'],
+        'import_type': request.form['import-type'],
+        'status': 'Connecting...',
+        'items': [],
+        'login': {
+            'id': request.form['id'],
+            'email': request.form['email'],
+            'pass': request.form['password'],
+        }
+    }
+
+    return render_template('wait.html')
+
 
 
 @app.route('/authorize', methods=['POST'])
 def authorize():
     url = 'https://login.bigcommerce.com/oauth2/token'
     headers = {'content-type': 'application/x-www-form-urlencoded'}
-    temp_auth = json.loads(request.form['auth'])
 
     data = {
         'client_id': client_id,
         'client_secret': client_secret,
-        'code': temp_auth['code'],
-        'scope': temp_auth['scope'],
-        'context': temp_auth['context'],
+        'code': session['temp_auth'].get('code', ''),
+        'scope': session['temp_auth'].get('scope', ''),
+        'context': session['temp_auth'].get('context', ''),
         'grant_type': 'authorization_code',
         'redirect_uri': 'http://127.0.0.1:5000/auth'
     }
+
+    session.pop('temp_auth', None)
 
     response = requests.post(url, headers=headers, data=data).json()
 
@@ -84,30 +148,37 @@ def authorize():
     return render_template('index.html')
 
 
-@app.route('/uninstall')
-def uninstall():
-    return render_template('uninstall.html')
+
+@app.route("/icons/<file_name>.svg")
+def get_icon(file_name):
+    response = make_response(render_template(f'icons/{file_name}.svg'))
+    response.mimetype = 'image/svg+xml'
+    
+    return response
+
 
 
 @app.route("/scrape")
 def scrape():
-    scrape_with_crochet(url=request.args['url']) # Passing that URL to our Scraping Function
-    
-    return render_template('index.html') # Returns the scraped data after being running for 20 seconds.
+    scraper_settings = session['scrape']
+
+    scrape_with_crochet(scraper_settings)
+
+    return json.dumps(scraper_settings['items'])
+
 
 
 @crochet.wait_for(timeout=60)
-def scrape_with_crochet(url):
-    dispatcher.connect(_crawler_result, signal=signals.item_scraped)
-    eventual = runner.crawl(ProductSpider, start_urls=[url])
+def scrape_with_crochet(settings):
+    url = settings['url']
+    items = settings['items']
+    login = settings['login']
+
+    dispatcher.connect(_item_processed, signal=signals.item_scraped)
+    eventual = runner.crawl(ProductSpider, start_urls=[url], output=items, login=login)
 
     return eventual
 
-
-def _crawler_result(item, response, spider):
-    output.append(dict(item))
-    print(item)
-    
 
 
 if __name__ == '__main__':

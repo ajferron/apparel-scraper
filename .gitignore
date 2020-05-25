@@ -1,3 +1,4 @@
 .vscode/
 product/
 __pycache__/
+.env
