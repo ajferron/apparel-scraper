@@ -63,6 +63,31 @@ db = SQLAlchemy(app)
 crochet.setup()
 
 
+
+class StoreOwner(db.Model):
+    # in python env...
+    # from app import db
+    # db.createall()
+
+    __tablename__ = 'users'
+
+    id = db.Column(db.Integer, primary_key=True)
+    store_hash = db.Column(db.String(24), unique=True)
+    access_token = db.Column(db.String(64), unique=True)
+    scope = db.Column(db.String(), unique=False)
+    username = db.Column(db.String(), unique=True)
+    email = db.Column(db.String(), unique=True)
+     
+    def __init__(self, json):
+        self.store_hash = json['access_token']
+        self.access_token = json['context'].split('/')[1]
+        self.username = json['user'].get('username')
+        self.email = json['user'].get('email')
+        self.id = json['user'].get('id')
+        self.scope = json['scope']
+
+
+
 def parse_user(json):
     print('RESPONSE')
     print(json)
