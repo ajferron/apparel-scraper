@@ -27,7 +27,7 @@
     padding: 2.5px 0;
     font-size: 14px;
     cursor: pointer;
-    width: 49%;
+    width: 50%;
 }
 
 .multi-btn .item.active {
@@ -42,7 +42,7 @@
     width: 100%;
     border: 1px solid var(--light);
     border-radius: 10px;
-    margin: 25px 0 35px;
+    margin: 35px 0 45px;
 }
 
 #site-login .title {
