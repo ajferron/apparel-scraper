@@ -12,6 +12,7 @@
 }
 
 .center {
+    display: inline-block;
     position: absolute;
     top: 50%;
     left: 50%;
@@ -24,9 +25,12 @@ button, input[type="submit"] {
     border: none;
     font: inherit;
     outline: inherit;
-    cursor: pointer;
+    transition: all ease 0.25s;
 }
 
+button, input[type="submit"] {
+    cursor: pointer;
+}
 
 
 button.solid-btn,
@@ -37,12 +41,25 @@ input.solid-btn {
     font-size: 16px;
     color: white;
     width: 100%;
-    transition: all ease 0.25s;
+    overflow: auto;
+}
+
+button.ghost-btn,
+input.ghost-btn {
+    background: white;
+    border: 1px solid var(--main);
+    border-radius: 5px;
+    padding: 10px;
+    font-size: 16px;
+    color: var(--main);
+    width: 100%;
 }
 
 button.solid-btn:hover,
-input.solid-btn:hover {
-    box-shadow: 0px 0px 10px #9895A6;
+input.solid-btn:hover,
+button.ghost-btn:hover,
+input.ghost-btn:hover {
+    box-shadow: 0 0 0 5px #E9E6F2;
 }
 
 
