@@ -103,7 +103,7 @@ def parse_user(json):
 @app.route('/')
 def index():
     payload = request.args.get('signed_payload', '')
-    data = verify_payload(payload, client_secret())
+    data = verify_payload(payload, client_secret()) if payload else {}
     session['data'] = data
 
     return render_template('index.html')
@@ -128,8 +128,8 @@ def uninstall():
 
 
 
-@app.route('/submit_import', methods=['POST'])
-def submit_import():
+@app.route('/import', methods=['POST'])
+def verify_import():
     session['scrape'] = {
         'url': request.form['url'],
         'import_type': request.form['import-type'],
@@ -142,7 +142,7 @@ def submit_import():
         }
     }
 
-    return render_template('wait.html')
+    return render_template('import.html')
 
 
 
@@ -152,8 +152,8 @@ def authorize():
     headers = {'content-type': 'application/x-www-form-urlencoded'}
 
     data = {
-        'client_id': client_id,
-        'client_secret': client_secret,
+        'client_id': client_id(),
+        'client_secret': client_secret(),
         'code': session['temp_auth'].get('code', ''),
         'scope': session['temp_auth'].get('scope', ''),
         'context': session['temp_auth'].get('context', ''),

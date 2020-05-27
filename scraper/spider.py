@@ -5,22 +5,18 @@ from scraper.items import ProductItem
 # scrapy crawl products
 # scrapy shell -s USER_AGENT='custom user agent' "http://localhost:8080/index.html"
 
-sanmar_login = {
-    'w3exec': 'login', 
-    'customerNo': '',
-    'email': '',
-    'password': '', 
-    'send': ''
-}
-
 
 class ProductSpider(scrapy.Spider):
 
     name = "products"
 
     custom_settings = {
-        "IMAGES_STORE": 'images',
+        "DOWNLOAD_DELAY": 1
+    }
+    
+    _custom_settings = {
         "DOWNLOAD_DELAY": 1,
+        "IMAGES_STORE": 'images',
         "ITEM_PIPELINES": {
             'scraper.pipelines.ProductImagePipeline': 100,
             'scraper.pipelines.JsonWriterPipeline': 200
@@ -30,15 +26,21 @@ class ProductSpider(scrapy.Spider):
     def start_requests(self):
         return [scrapy.FormRequest(
             url = "https://www.sanmarcanada.com/flashconnect/index/index/",
-            formdata = sanmar_login,
-            callback = self.after_login
+            callback = self.after_login,
+            formdata = {
+                'w3exec': 'login', 
+                'customerNo': self.login['id'],
+                'email': self.login['email'],
+                'password': self.login['pass'], 
+                'send': ''
+            }
         )]
 
     def after_login(self, response):
         if 'login' in response.url:
             self.logger.error("[!] LOGIN FAILED")
             return
-        
+
         return [scrapy.Request(url=url, meta={'product': False}) for url in self.start_urls]
 
 
@@ -62,15 +64,21 @@ class ProductSpider(scrapy.Spider):
         urls = imgs.css(".item a::attr(href)").getall()
         clrs = imgs.css('.item a::attr(title)').getall()
         sku = name.split('.')[1].replace(' ', '').lower()
-        
+
+        clrs[0] = 'thumbnail'
+
         sizes = response.css('.productgrid .header')[0].css('td::text').getall()[2:]
         prices = response.css('.productgrid .body')[0].css('.price::text').getall()
-
-        return ProductItem(
-            name=name, 
-            sku=sku, 
-            description=desc, 
-            colors=clrs, 
-            image_urls=urls, 
-            sizes=dict(zip(sizes, prices))
+        
+        product = ProductItem (
+            name=name,
+            sku=sku,
+            description=desc,
+            colors=clrs,
+            sizes=dict(zip(sizes, map(lambda p : p.replace('$',''), prices))),
+            swatch=dict(zip(clrs, urls))
         )
+
+        self.output.append(dict(product))
+
+        return product
