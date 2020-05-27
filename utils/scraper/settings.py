@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 BOT_NAME = 'scraper'
 SPIDER_MODULES = ['scraper']
 NEWSPIDER_MODULE = 'scraper'

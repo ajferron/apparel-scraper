@@ -1,12 +1,8 @@
 import scrapy
-from scraper.items import ProductItem
-
-# php -S localhost:8080
-# scrapy crawl products
-# scrapy shell -s USER_AGENT='custom user agent' "http://localhost:8080/index.html"
+from .items import SanmarProduct
 
 
-class ProductSpider(scrapy.Spider):
+class SanmarSpider(scrapy.Spider):
 
     name = "products"
 
@@ -28,10 +24,10 @@ class ProductSpider(scrapy.Spider):
             url = "https://www.sanmarcanada.com/flashconnect/index/index/",
             callback = self.after_login,
             formdata = {
-                'w3exec': 'login', 
+                'w3exec': 'login',
                 'customerNo': self.login['id'],
                 'email': self.login['email'],
-                'password': self.login['pass'], 
+                'password': self.login['pass'],
                 'send': ''
             }
         )]
@@ -70,7 +66,7 @@ class ProductSpider(scrapy.Spider):
         sizes = response.css('.productgrid .header')[0].css('td::text').getall()[2:]
         prices = response.css('.productgrid .body')[0].css('.price::text').getall()
         
-        product = ProductItem (
+        product = SanmarProduct(
             name=name,
             sku=sku,
             description=desc,

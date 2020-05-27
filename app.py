@@ -1,17 +1,13 @@
-from flask import Flask, request, session, render_template, make_response, jsonify, redirect, url_for
+from flask import Flask, request, session, render_template, make_response, jsonify, url_for
+from utils import verify_payload, parse_user, test_data, run_spider
 from flask_sqlalchemy import SQLAlchemy
-from scrapy.crawler import CrawlerRunner
-from scrapy.signalmanager import dispatcher
-from scrapy import signals
-from scraper import ProductSpider
-from uuid import uuid4
-import hmac, hashlib, base64
 import dotenv
-import crochet
 import requests
 import json
 import os
 
+
+DEBUG = False
 
 app = Flask(__name__)
 
@@ -21,25 +17,8 @@ if os.path.exists('.env'):
 app.config['APP_CLIENT_ID'] = os.getenv('APP_CLIENT_ID')
 app.config['APP_CLIENT_SECRET'] = os.getenv('APP_CLIENT_SECRET')
 app.config['SESSION_SECRET'] = os.getenv('SESSION_SECRET')
-app.config['SQLALCHEMY_DATABASE_URI'] = ''
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-
-def verify_payload(signed_payload, client_secret):
-    encoded_json, encoded_hmac = signed_payload.split('.')
-    
-    dc_json = base64.b64decode(encoded_json)
-    signature = base64.b64decode(encoded_hmac)
-    
-    expected_sig = hmac.new(client_secret.encode(), base64.b64decode(encoded_json), hashlib.sha256).hexdigest()
-    authorized = hmac.compare_digest(signature, expected_sig.encode())
-
-    return json.loads(dc_json.decode()) if authorized else False
-
-
-def _item_processed(item, response, spider):
-    # items.append(dict(item))
-    pass
 
 
 def client_id():
@@ -57,10 +36,7 @@ def session_secret():
 
 app.secret_key = session_secret()
 
-runner = CrawlerRunner()
 db = SQLAlchemy(app)
-
-crochet.setup()
 
 
 
@@ -86,18 +62,6 @@ class StoreOwner(db.Model):
         self.id = json['user'].get('id')
         self.scope = json['scope']
 
-
-
-def parse_user(json):
-    print('RESPONSE')
-    print(json)
-
-    token = json['access_token']
-    scope = json['scope']
-    user_id = json['user'].get('id')
-    user_name = json['user'].get('username')
-    user_email = json['user'].get('email')
-    store_hash = json['context']
 
 
 @app.route('/')
@@ -150,6 +114,10 @@ def verify_import():
 def authorize():
     url = 'https://login.bigcommerce.com/oauth2/token'
     headers = {'content-type': 'application/x-www-form-urlencoded'}
+    redirect = {
+        'prod': 'https://supplier-scraper.herokuapp.com/auth',
+        'dev': 'http://127.0.0.1:5000/auth'
+    }
 
     data = {
         'client_id': client_id(),
@@ -158,7 +126,7 @@ def authorize():
         'scope': session['temp_auth'].get('scope', ''),
         'context': session['temp_auth'].get('context', ''),
         'grant_type': 'authorization_code',
-        'redirect_uri': 'http://127.0.0.1:5000/auth'
+        'redirect_uri': redirect['dev'] if DEBUG else redirect['prod']
     }
 
     session.pop('temp_auth', None)
@@ -166,9 +134,7 @@ def authorize():
     response = requests.post(url, headers=headers, data=data).json()
 
     if 'error' in response:
-        return render_template('error.html', message='Unable to authorize, try again later.')
-    else:
-        parse_user(response)
+        return render_template('error.html', message=response.error)
 
     return render_template('index.html')
 
@@ -184,25 +150,13 @@ def get_icon(file_name):
 
 
 @app.route("/scrape")
-def scrape():
-    scraper_settings = session['scrape']
+def init_scrape():
+    if DEBUG: return test_data
 
-    scrape_with_crochet(scraper_settings)
+    settings = session['scrape']
+    run_spider(settings)
 
-    return json.dumps(scraper_settings['items'])
-
-
-
-@crochet.wait_for(timeout=60)
-def scrape_with_crochet(settings):
-    url = settings['url']
-    items = settings['items']
-    login = settings['login']
-
-    dispatcher.connect(_item_processed, signal=signals.item_scraped)
-    eventual = runner.crawl(ProductSpider, start_urls=[url], output=items, login=login)
-
-    return eventual
+    return json.dumps(settings['items'])
 
 
 
