@@ -115,7 +115,7 @@ def authorize():
     url = 'https://login.bigcommerce.com/oauth2/token'
     headers = {'content-type': 'application/x-www-form-urlencoded'}
     redirect = {
-        'prod': 'https://supplier-scraper.herokuapp.com/auth',
+        'prod': 'https://apparel-scraper.herokuapp.com/auth',
         'dev': 'http://127.0.0.1:5000/auth'
     }
 
