@@ -20,6 +20,45 @@
 </head>
 
 <body>
+    <script id='product-template' type='text/template'>
+        <div class="product">
+            <div class="preview">
+                <div class="main-display">
+                    <img src="" alt=""/>
+                </div>
+                <div class="options"> 
+
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <form class="specs">
+                <fieldset>
+                    <div class="product-name input-wrapper">
+                        <label for="name"> Product Name </label>
+                        <input class="ghost" type="text" name="name">
+                    </div><!-- 
+                --><div class="product-sku input-wrapper">
+                        <label for="sku"> Product SKU </label>
+                        <input class="ghost" type="text" name="sku">
+                    </div>
+                </fieldset>
+
+                <table class="size-table">
+                    <tr class="sizes"> </tr>
+                    <tr class="prices"> </tr>
+                </table>
+
+                <div class="input-wrapper">
+                    <label> Product Description </label>
+                    <div class="product-description"></div>
+                </div>
+            </form>
+        </div>
+    </script>
+
+
     <span id="items"> {{ items }} </span>
 
     <div id="load-wrapper" class="center">
@@ -29,7 +68,9 @@
 
     <div id="content-wrapper" class="center">
         <div id="left-col">
-            <img src="icons/l-arrow.svg" alt="">
+            <button id="left-btn">
+                <img src="icons/l-arrow.svg" alt="">
+            </button>
         </div>
 
         <div id="main-col">
@@ -43,67 +84,7 @@
             </header>
 
             <div id="product-wrapper">
-                <div class="preview">
-                    <div class="main-display">
-                        <img id="curr-img" src="https://media.sanmarcanada.com/catalog/product/cache/1/image/950x/040ec09b1e35df139433887a97daa66f/y/2/y2016_form_angle_athleticgrey_032017_v2c1.jpg" alt="">
-                    </div>
-                    
-                    <div class="options">
-                        <img src="https://media.sanmarcanada.com/catalog/product/cache/1/image/950x/040ec09b1e35df139433887a97daa66f/y/2/y2016_form_angle_athleticgrey_032017_v2c1.jpg" alt="">
-                        <img src="https://media.sanmarcanada.com/catalog/product/cache/1/image/950x/040ec09b1e35df139433887a97daa66f/y/2/y2016_form_angle_black_012016.jpg" alt="">
-                        <img src="https://media.sanmarcanada.com/catalog/product/cache/1/image/950x/040ec09b1e35df139433887a97daa66f/y/2/y2016_form_angle_charcoalheather_012016.jpg" alt="">
-                        <img src="https://media.sanmarcanada.com/catalog/product/cache/1/image/950x/040ec09b1e35df139433887a97daa66f/y/2/y2016_form_angle_truenavy_012016.jpg" alt="">
-                        <img src="https://media.sanmarcanada.com/catalog/product/cache/1/image/950x/040ec09b1e35df139433887a97daa66f/y/2/y2016_form_angle_truered_012016.jpg" alt="">
-                        <img src="https://media.sanmarcanada.com/catalog/product/cache/1/image/950x/040ec09b1e35df139433887a97daa66f/y/2/y2016_form_angle_trueroyal_012016.jpg" alt="">
-                    </div>
-                </div>
-
-                <div id="divider"></div>
                 
-                <form class="specs">
-                    <fieldset>
-                        <div  id="product-name" class="input-wrapper">
-                            <label for="name"> Product Name </label>
-                            <input class="ghost" type="text" name="name">
-                        </div><!-- 
-
-                     --><div id="product-sku" class="input-wrapper">
-                            <label for="sku"> SKU </label>
-                            <input class="ghost" type="text" name="sku">
-                        </div>
-                    </fieldset>
-                    
-                    <div class="input-wrapper">
-                        <label> Product Description </label>
-                        <div id="product-description" class="input-wrapper">
-                            <!-- <label for="description"> SKU </label> -->
-                            <!-- <input class="ghost" type="text" name="description"> -->
-                        </div>
-                    </div>
-
-                    <table id="size-table">
-                        <tr>
-                          <th> <label for="XS"> XS </label> </th>
-                          <th> <label for="S"> S </label> </th>
-                          <th> <label for="M"> M </label> </th>
-                          <th> <label for="L"> L </label> </th>
-                          <th> <label for="XL"> XL </label> </th>
-                          <th> <label for="2XL"> 2XL </label> </th>
-                          <th> <label for="3XL"> 3XL </label> </th>
-                          <th> <label for="4XL"> 4XL </label> </th>
-                        </tr>
-                        <tr>
-                          <td> <input class="ghost" type="text" name="XS"> </td>
-                          <td> <input class="ghost" type="text" name="S"> </td>
-                          <td> <input class="ghost" type="text" name="M"> </td>
-                          <td> <input class="ghost" type="text" name="L"> </td>
-                          <td> <input class="ghost" type="text" name="XL"> </td>
-                          <td> <input class="ghost" type="text" name="2XL"> </td>
-                          <td> <input class="ghost" type="text" name="3XL"> </td>
-                          <td> <input class="ghost" type="text" name="4XL"> </td>
-                        </tr>
-                    </table>
-                </form>
             </div>
 
             <footer>
@@ -112,7 +93,9 @@
         </div>
 
         <div id="right-col">
-            <img src="icons/r-arrow.svg" alt="">
+            <button id="right-btn">
+                <img src="icons/r-arrow.svg" alt="">
+            </button>
         </div>
     </div>
 

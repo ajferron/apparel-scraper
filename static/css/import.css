@@ -1,22 +1,15 @@
-#load-wrapper { display: none } /* Remove dis */
-
 #loading-icon { animation:spin 2s linear infinite; }
 
 #url {  display: none; }
 
 @keyframes spin { 100% { -webkit-transform: rotate(360deg); transform:rotate(360deg); } }
 
-
-
 #content-wrapper {
     display: inline-flex;
     align-items: center;
     width: 75%;
-    height: 70%;
     min-width: 850px;
 }
-
-
 
 #content-wrapper #main-col {
     display: flex;
@@ -86,7 +79,6 @@
 }
 
 #main-col header button#upload {
-    /* font-weight: 600; */
     margin-left: 15px;
 }
 
@@ -99,11 +91,15 @@
 }
 
 #main-col #product-wrapper {
+    min-height: 450px;
+}
+
+#main-col #product-wrapper .product {
     display: flex;
     justify-content: center;
     height: 100%;
 }
-#main-col #product-wrapper #divider {
+#main-col #product-wrapper .product .divider {
     width: 75px;
     height: 100%;
 }
@@ -119,40 +115,40 @@
 ##        ##     ## ########    ###    #### ########  ###  ###
 */
 
-#product-wrapper .preview {
+.product .preview {
     display: inline-flex;
     flex-direction: column;
     align-items: center;
     height: 100%;
-    max-width: 40%;
+    max-width: 30%;
 }
 
-#product-wrapper .preview .main-display {
+.product .preview .main-display {
     border-bottom: 1px solid var(--main);
     padding-bottom: 5px;
     margin-bottom: 15px;
 }
 
-#product-wrapper .preview .main-display img {
-    height: 300px;
+.product .preview .main-display img {
+    height: 325px;
 }
 
-#product-wrapper .preview .options {
+.product .preview .options {
     max-width: 100%;
 }
 
-#product-wrapper .preview .options img {
+.product .preview .options img {
     margin-left: 10px;
     height: 35px;
     transition: transform ease 0.25s;
 }
 
-#product-wrapper .preview .options img:hover {
+.product .preview .options img:hover {
     transform: scale(1.15);
     cursor: pointer;
 }
 
-#product-wrapper .preview .options img:first-child {
+.product .preview .options img:first-child {
     margin-left: 0;
     height: 35px;
 }
@@ -168,39 +164,65 @@
  ######  ##        ########  ######   ######
 */
 
-#product-wrapper .specs {
+.product .specs {
     display: flex;
     flex-direction: column;
     width: 55%;
     height: 100%;
 }
 
-#product-wrapper .specs .input-wrapper {
+.product .specs .input-wrapper {
     display: flex;
     flex-flow: column;
     justify-content: space-between;
 }
 
-#product-wrapper .specs .input-wrapper label {
-    margin-bottom: 2.5px;
-    margin-left: 5px;
+.product .specs .input-wrapper label {
+    margin-bottom: 5px;
 }
 
-#product-wrapper .specs fieldset {
+.product .specs fieldset {
     border: none;
     width: 100%;
-    margin-bottom: 35px;
 }
 
-#product-wrapper .specs fieldset #product-name {
+.product .specs fieldset .product-name {
     display: inline-flex;
     width: 65%;
 }
 
-#product-wrapper .specs fieldset #product-sku {
+.product .specs fieldset .product-sku {
     display: inline-flex;
     width: 30%;
     float: right;
+}
+
+
+
+.product .specs .size-table {
+    margin: 20px 0 30px;
+    border-spacing: 0;
+}
+
+.product .specs .size-table td,
+.product .specs .size-table th {
+    border-left: 10px solid transparent;
+}
+
+.product .specs .size-table td:first-child,
+.product .specs .size-table th:first-child {
+    border-left: none;
+}
+
+.product .specs .size-table th {
+    padding-bottom: 10px;
+}
+
+.product .specs .size-table td input {
+    text-align: center;
+    font-size: 14px;
+    height: 30px;
+    padding: 5px 5px;
 }
 
 
@@ -223,30 +245,9 @@
     font-size: 16px;
 }
 
-
-
-#product-wrapper .specs #size-table {
-    margin-top: 35px;
-    border-spacing: 0;
+.ql-editor ul {
+    padding-left: 0;
 }
-
-#product-wrapper .specs #size-table td,
-#product-wrapper .specs #size-table th {
-    border-left: 10px solid transparent;
-}
-
-#product-wrapper .specs #size-table td:first-child,
-#product-wrapper .specs #size-table th:first-child {
-    border-left: none;
-}
-
-#product-wrapper .specs #size-table th {
-    padding-bottom: 10px;
-}
-
-#product-wrapper .specs #size-table td input {
-    text-align: center;
-    font-size: 14px;
-    height: 30px;
-    padding: 5px 5px;
+.ql-editor ul li {
+    padding-left: 1em !important;
 }
