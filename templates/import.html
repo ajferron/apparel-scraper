@@ -31,7 +31,7 @@
                 </div>
             </div>
 
-            <div class="divider"></div>
+            <div class="divider" style="width: 25px"></div>
 
             <form class="specs">
                 <fieldset>
@@ -55,11 +55,128 @@
                     <div class="product-description"></div>
                 </div>
             </form>
+
+            <div class="divider" style="width: 40px"></div>
+
+            <div class="categories">
+                <h3> Category </h3>
+
+                <div class="category-wrapper">
+                    <div class="category">
+                        <input type="checkbox" name="apparel" value="19">
+                        <label for="apparel"> Apparel </label>
+
+                        <div class="category">
+                            <input type="checkbox" name="golf-shirts" value="187">
+                            <label for="golf-shirts"> Golf Shirts </label>
+                        </div>
+
+                        <div class="category">
+                            <input type="checkbox" name="imprint-setup" value="41">
+                            <label for="imprint-setup"> Imprint Setup </label>
+                        </div>
+
+                        <div class="category">
+                            <input type="checkbox" name="work-wear" value="47">
+                            <label for="work-wear"> Work Wear </label>
+                        </div>
+
+                        <div class="category">
+                            <input type="checkbox" name="woven-shirts" value="46">
+                            <label for="woven-shirts"> Woven Shirts </label>
+                        </div>
+
+                        <div class="category">
+                            <input type="checkbox" name="headwear" value="27">
+                            <label for="headwear"> Headwear </label>
+                        </div>
+
+                        <div class="category">
+                            <input type="checkbox" name="outerwear" value="23">
+                            <label for="outerwear"> Outerwear </label>
+                        </div>
+
+                        <div class="category">
+                            <input type="checkbox" name="active-wear" value="25">
+                            <label for="active-wear"> Active Wear </label>
+                        </div>
+
+                        <div class="category">
+                            <input type="checkbox" name="fleece-hoodies" value="21">
+                            <label for="fleece-hoodies"> Fleece & Hoodies </label>
+                        </div>
+
+                        <div class="category">
+                            <input type="checkbox" name="sport-shirts" value="24">
+                            <label for="sport-shirts"> Sports Shirts </label>
+                        </div>
+
+                        <div class="category">
+                            <input type="checkbox" name="tshirts" value="22">
+                            <label for="tshirts"> T-Shirts </label>
+                        </div>
+
+                        <div class="category">
+                            <input type="checkbox" name="pants-shorts" value="26">
+                            <label for="pants-shorts"> Pants/Shorts </label>
+                        </div>
+
+                        <div class="category">
+                            <input type="checkbox" name="ladies-only" value="28">
+                            <label for="ladies-only"> Ladies' Only </label>
+                        </div>
+
+                        <div class="category">
+                            <input type="checkbox" name="youth-only" value="29">
+                            <label for="youth-only"> Youth Only </label>
+                        </div>
+                    </div>
+
+                    <div class="category">
+                        <input type="checkbox" name="branding" value="20">
+                        <label for="branding"> Branding </label>
+
+                        <div class="category">
+                            <input type="checkbox" name="automotive" value="54">
+                            <label for="automotive"> Automotive </label>
+                        </div>
+
+                        <div class="category">
+                            <input type="checkbox" name="business" value="55">
+                            <label for="business"> Business </label>
+                        </div>
+
+                        <div class="category">
+                            <input type="checkbox" name="coolers-bags" value="53">
+                            <label for="coolers-bags"> Coolers & Lunch Bags </label>
+                        </div>
+
+                        <div class="category">
+                            <input type="checkbox" name="drinkware" value="50">
+                            <label for="drinkware"> Drinkware </label>
+                        </div>
+
+                        <div class="category">
+                            <input type="checkbox" name="outdoor" value="51">
+                            <label for="outdoor"> Outdoor </label>
+                        </div>
+
+                        <div class="category">
+                            <input type="checkbox" name="stationary-pens" value="56">
+                            <label for="stationary-pens"> Stationary & Pens </label>
+                        </div>
+
+                        <div class="category">
+                            <input type="checkbox" name="travel" value="52">
+                            <label for="travel"> Travel </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </script>
 
 
-    <span id="items"> {{ items }} </span>
 
     <div id="load-wrapper" class="center">
         <img id="loading-icon" src="icons/load.svg" alt="">
@@ -99,6 +216,43 @@
         </div>
     </div>
 
+
+
+    <div id="confirm-dialog" class="dialog center">
+        <form action="/begin_import" method="POST">
+            <div class="dialog-content">
+                <header>
+                    <h3> Confirm Import </h3>
+                    <button class="close" type="button" onclick="closeDialog('confirm-dialog')">
+                        <img src="icons/close.svg" alt="">
+                    </button>
+                </header>
+
+                <span class="message"></span>
+            </div>
+
+            <input id="products" type="hidden" name="products" value="">
+
+            <input type="submit" class="solid-btn" value="Confirm"/>
+        </form>
+    </div>
+
+    <div id="cancel-dialog" class="dialog center">
+        <form action="/cancel_import" method="POST">
+            <div class="dialog-content">
+                <header>
+                    <h3> Cancel Import </h3>
+                    <button class="close" type="button" onclick="closeDialog('cancel-dialog')">
+                        <img src="icons/close.svg" alt="">
+                    </button>
+                </header>
+
+                <span class="message"> Are you sure you want to cancel? </span>
+            </div>
+
+            <input type="submit" class="solid-btn" value="Confirm"/>
+        </form>
+    </div>
 </body>
 
 
