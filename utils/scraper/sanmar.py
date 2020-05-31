@@ -34,10 +34,10 @@ class SanmarSpider(scrapy.Spider):
 
     def after_login(self, response):
         if 'login' in response.url:
-            self.logger.error("[!] LOGIN FAILED")
+            self.logger['error'] = 'Failed login'
             return
 
-        return [scrapy.Request(url=url, meta={'product': False}) for url in self.start_urls]
+        return [scrapy.Request(url=url, meta={'product': self.is_product}) for url in self.start_urls]
 
 
     def parse(self, response):
@@ -54,14 +54,14 @@ class SanmarSpider(scrapy.Spider):
 
 
     def parse_product(self, response):
-        name = response.css('.product-name h1::text').get()
+        name, sku = response.css('.product-name h1::text').get().split('.')
         desc = response.css('.short-description .std ul').get().replace("\n", "")
         imgs = response.css('#itemslider-zoom')[0]
         urls = imgs.css(".item a::attr(href)").getall()
         clrs = imgs.css('.item a::attr(title)').getall()
-        sku = name.split('.')[1].replace(' ', '').lower()
 
-        clrs[0] = 'thumbnail'
+        clrs[0] = 'Thumbnail'
+        sku = sku.replace(' ', '')
 
         sizes = response.css('.productgrid .header')[0].css('td::text').getall()[2:]
         prices = response.css('.productgrid .body')[0].css('.price::text').getall()

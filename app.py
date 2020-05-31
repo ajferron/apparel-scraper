@@ -1,11 +1,10 @@
 from flask import Flask, request, session, render_template, make_response, jsonify, url_for
-from utils import verify_payload, parse_user, test_data, run_spider
+from utils import BigCommerceStore, verify_sig, test_data, run_spider
 from flask_sqlalchemy import SQLAlchemy
 import dotenv
 import requests
 import json
 import os
-
 
 DEBUG = False
 
@@ -54,21 +53,21 @@ class StoreOwner(db.Model):
     username = db.Column(db.String(), unique=True)
     email = db.Column(db.String(), unique=True)
      
-    def __init__(self, json):
-        self.store_hash = json['access_token']
-        self.access_token = json['context'].split('/')[1]
-        self.username = json['user'].get('username')
-        self.email = json['user'].get('email')
-        self.id = json['user'].get('id')
-        self.scope = json['scope']
+    def __init__(self, data):
+        self.access_token = data['access_token']
+        self.store_hash = data['context'].split('/')[1]
+        self.username = data['user'].get('username')
+        self.email = data['user'].get('email')
+        self.id = data['user'].get('id')
+        self.scope = data['scope']
 
 
 
 @app.route('/')
 def index():
     payload = request.args.get('signed_payload', '')
-    data = verify_payload(payload, client_secret()) if payload else {}
-    session['data'] = data
+
+    session['bc_data'] = verify_sig(payload, client_secret()) if payload else {}
 
     return render_template('index.html')
 
@@ -86,27 +85,20 @@ def auth():
 
 
 
-@app.route('/uninstall')
+@app.route('/uninstall/')
 def uninstall():
+    payload = request.args.get('signed_payload', '')
+    bc_data = verify_sig(payload, client_secret()) if payload else {}
+
+    if bc_data:
+        user_id = bc_data['user'].get('id')
+        store_owner = StoreOwner.query.get(int(user_id))
+
+        if store_owner is not None:
+            db.session.delete(store_owner)
+            db.session.commit()
+
     return render_template('uninstall.html')
-
-
-
-@app.route('/import', methods=['POST'])
-def verify_import():
-    session['scrape'] = {
-        'url': request.form['url'],
-        'import_type': request.form['import-type'],
-        'status': 'Connecting...',
-        'items': [],
-        'login': {
-            'id': request.form['id'],
-            'email': request.form['email'],
-            'pass': request.form['password'],
-        }
-    }
-
-    return render_template('import.html')
 
 
 
@@ -134,7 +126,16 @@ def authorize():
     response = requests.post(url, headers=headers, data=data).json()
 
     if 'error' in response:
-        return render_template('error.html', message=response.error)
+        return render_template('error.html', message=response['error'])
+
+    user_id = int(response['user'].get('id'))
+    store_owner = StoreOwner.query.get(user_id)
+
+    if store_owner is not None:
+        db.session.delete(store_owner)
+
+    db.session.add(StoreOwner(response))
+    db.session.commit()
 
     return render_template('index.html')
 
@@ -151,15 +152,83 @@ def get_icon(file_name):
 
 @app.route("/scrape")
 def init_scrape():
-    if DEBUG: return test_data
-
     settings = session['scrape']
     run_spider(settings)
 
-    return json.dumps(settings['items'])
+    items = {'items': settings['items']}
+    logger = settings['logger']
+
+    return json.dumps(items if not 'error' in logger else logger)
+
+
+
+@app.route('/import', methods=['POST'])
+def verify_import():
+    session['scrape'] = {
+        'url': request.form['url'],
+        'import_type': request.form['import-type'],
+        'status': 'Connecting...',
+        'items': [],
+        'logger': {}, 
+        'login': {
+            'id': request.form['id'],
+            'email': request.form['email'],
+            'pass': request.form['password'],
+        }
+    }
+
+    return render_template('import.html')
+
+
+
+@app.route("/begin_import", methods=['POST'])
+def begin_import():
+    bc_data = session['bc_data']
+    user_id = bc_data['user'].get('id')
+    store_owner = StoreOwner.query.get(int(user_id))
+    products = json.loads(request.form['products'])
+    results = []
+
+    if store_owner is not None:
+        store = BigCommerceStore(store_owner, client_id(), client_secret())
+
+    get_id = lambda r : r.json().get('data', {}).get('id', None) if r is not None else False
+    get_opts = lambda r : r.json().get('data', {}).get('option_values', None) if r is not None else False
+    get_json = lambda r : r.json() if r is not None and r.status_code != 200 else {}
+
+    for product in products:
+        product_resp = store.create_product(product)
+
+        status = {
+            'name': product['name'],
+            'id': get_id(product_resp),
+            'json': get_json(product_resp),
+            'modifiers': []
+        }
+
+        if product_resp is not None and product_resp.status_code == 200:
+            size_mod = store.create_size_modifier(status['id'], product)
+            clr_mod = store.create_color_modifier(status['id'], product)
+            mod_id = get_id(clr_mod['response'])
+
+            status['modifiers'].extend((get_json(size_mod), get_json(clr_mod['response'])))
+
+            for val, adj in zip(get_opts(clr_mod['response']), clr_mod['adjusters']):
+                mod_update = store.update_modifier(status['id'], mod_id, val['id'], adj)
+
+                status['modifiers'].append(get_json(mod_update))
+
+        results.append(status)
+
+    return render_template('results.html', data=json.dumps(results))
+
+
+
+@app.route("/cancel_import", methods=['POST'])
+def cancel_import():
+    return render_template('import.html')
 
 
 
 if __name__ == '__main__':
-    app.debug = True
     app.run()

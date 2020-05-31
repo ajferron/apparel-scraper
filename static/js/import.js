@@ -4,6 +4,7 @@ var products
 
 $(document).ready(() => {
     $('#content-wrapper').hide()
+    $('#overlay').hide()
 
     $.ajax({
         type: "GET",
@@ -62,6 +63,12 @@ $(document).ready(() => {
     $('#cancel').click(() => {
         $('#cancel-dialog').show()
         inDialog = true
+    })
+
+    $('#submit').click(() => {
+        $('#confirm-dialog').hide()
+        $('#load-wrapper').show()
+        $('#overlay').show()
     })
 })
 
@@ -137,7 +144,7 @@ function appendImages(display, swatch) {
             display.find('.main-display img').attr('src', this.src) 
         })
 
-        if (color === 'thumbnail')
+        if (color === 'Thumbnail')
             display.find('.main-display img').attr('src', img[0].src)
 
         display.find('.options').append(img)
@@ -149,10 +156,7 @@ function appendImages(display, swatch) {
 
 function getProductData() {
     let getSizes = (sizes) => {
-        return sizes.reduce((obj, {price, size}) => {
-            obj[size] = price.val()
-            return obj
-        }, {})
+        return sizes.map(({price, size}) => ({size, price: price.val()}))
     }
 
     let getCategories = (display) => {
@@ -179,7 +183,7 @@ function getProductData() {
         return product
     })
 
-    return data ? !data.includes(false) : false
+    return !data.includes(false) ? data : false
 }
 
 

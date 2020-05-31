@@ -15,7 +15,7 @@ runner = CrawlerRunner()
 test_data = json.load( open('./utils/data.json', 'r') )
 
 
-def verify_payload(signed_payload, client_secret):
+def verify_sig(signed_payload, client_secret):
     encoded_json, encoded_hmac = signed_payload.split('.')
 
     dc_json = base64.b64decode(encoded_json)
@@ -27,26 +27,21 @@ def verify_payload(signed_payload, client_secret):
     return json.loads(dc_json.decode()) if authorized else False
 
 
-def parse_user(json):
-    print('RESPONSE')
-    print(json)
-
-    token = json['access_token']
-    scope = json['scope']
-    user_id = json['user'].get('id')
-    user_name = json['user'].get('username')
-    user_email = json['user'].get('email')
-    store_hash = json['context']
-
-
 @crochet.wait_for(timeout=60)
 def run_spider(settings):
-    url = settings['url']
-    items = settings['items']
-    login = settings['login']
+    import_type = settings['import_type']
+    is_product = import_type == 'single'
 
     dispatcher.connect(_item_processed, signal=signals.item_scraped)
-    eventual = runner.crawl(SanmarSpider, start_urls=[url], output=items, login=login)
+    
+    eventual = runner.crawl(
+        SanmarSpider, 
+        start_urls=[settings['url']], 
+        output=settings['items'], 
+        login=settings['login'],
+        is_product=is_product,
+        logger=settings['logger']
+    )
 
     return eventual
 
