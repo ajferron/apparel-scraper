@@ -1,4 +1,4 @@
 .vscode/
-product/
+examples/
 __pycache__/
 .env

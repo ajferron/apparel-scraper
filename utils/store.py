@@ -40,8 +40,6 @@ class BigCommerceStore():
                 'sort_order': i
             })
 
-        # print(json.dumps(data, indent=2))
-
         return requests.post(url, headers=self.headers(), data=json.dumps(data))
 
 

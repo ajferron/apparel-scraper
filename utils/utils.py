@@ -46,5 +46,4 @@ def run_spider(settings):
 
 
 def _item_processed(item, response, spider):
-    # items.append(dict(item))
     pass
