@@ -12,7 +12,7 @@ import json
 crochet.setup()
 runner = CrawlerRunner()
 
-test_data = json.load( open('./utils/data.json', 'r') )
+test_data = json.load(open('./utils/data.json', 'r'))
 
 
 def verify_sig(signed_payload, client_secret):
@@ -32,15 +32,14 @@ def run_spider(settings):
     import_type = settings['import_type']
     is_product = import_type == 'single'
 
-    dispatcher.connect(_item_processed, signal=signals.item_scraped)
-    
+    # dispatcher.connect(_item_processed, signals.item_scraped)
+
     eventual = runner.crawl(
         SanmarSpider, 
         start_urls=[settings['url']], 
-        output=settings['items'], 
+        output=settings['items'],
         login=settings['login'],
-        is_product=is_product,
-        logger=settings['logger']
+        is_product=is_product
     )
 
     return eventual

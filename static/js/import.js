@@ -4,6 +4,7 @@ var products
 
 $(document).ready(() => {
     $('#content-wrapper').hide()
+    $('#error-wrapper').hide()
     $('#overlay').hide()
 
     $.ajax({
@@ -11,19 +12,26 @@ $(document).ready(() => {
         url: '/scrape',
         data: null,
         success: (data) => {
-            // console.log(JSON.parse(data))
+            data = JSON.parse(data)
 
             $('#load-wrapper').hide()
-            $('#content-wrapper').show()
 
-            products = JSON.parse(data).map(p => makeDisplay(p))
-            products[currProduct].display.show()
+            if (data.items && !data.items.length) {
+                $('#error-wrapper').show()
+                $('#error-status').html('Could not get data. <br> Check login creditentials, settings, and the URL.')
 
-            $('#progress').text(`${currProduct+1}/${products.length}`)
-
-            $('.category label').click(function() {
-                $(this).siblings('input').trigger('click')
-            })
+            } else {
+                $('#content-wrapper').show()
+    
+                products = data.items.map(p => makeDisplay(p))
+                products[currProduct].display.show()
+    
+                $('#progress').text(`${currProduct+1}/${products.length}`)
+    
+                $('.category label').click(function() {
+                    $(this).siblings('input').trigger('click')
+                })
+            }
         }
     })
 
@@ -39,9 +47,9 @@ $(document).ready(() => {
 
     $('#left-btn').click(() => {
         if (currProduct > 0) {
-            $('#progress').text(`${currProduct+1}/${products.length}`)
             products[currProduct].display.hide()
             products[--currProduct].display.show()
+            $('#progress').text(`${currProduct+1}/${products.length}`)
         }
     })
 

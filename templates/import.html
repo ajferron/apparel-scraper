@@ -212,7 +212,7 @@
 
 
     <div id="confirm-dialog" class="dialog center">
-        <form action="/begin_import" method="POST">
+        <form action="/import" method="POST">
             <div class="dialog-content">
                 <header>
                     <h3> Confirm Import </h3>
@@ -231,7 +231,7 @@
     </div>
 
     <div id="cancel-dialog" class="dialog center">
-        <form action="/cancel_import" method="POST">
+        <form action="/" method="GET">
             <div class="dialog-content">
                 <header>
                     <h3> Cancel Import </h3>
@@ -249,9 +249,18 @@
 
     <div id="overlay"></div>
 
+    <div id="error-wrapper" class="center">
+        <form action="/" method="GET">
+            <img src="icons/error.svg" alt="">
+            <span id="error-status"> </span>
+
+            <input type="submit" class="solid-btn" value="Retry"/>
+        </form>
+    </div>
+
     <div id="load-wrapper" class="center">
         <img id="loading-icon" src="icons/load.svg" alt="">
-        <h5 id="status"> </h5>
+        <span id="load-status"> </span>
     </div>
 </body>
 

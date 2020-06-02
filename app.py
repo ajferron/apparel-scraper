@@ -67,7 +67,8 @@ class StoreOwner(db.Model):
 def index():
     payload = request.args.get('signed_payload', '')
 
-    session['bc_data'] = verify_sig(payload, client_secret()) if payload else {}
+    if 'bc_data' not in session:
+        session['bc_data'] = verify_sig(payload, client_secret()) if payload else {}
 
     return render_template('index.html')
 
@@ -153,23 +154,25 @@ def get_icon(file_name):
 @app.route("/scrape")
 def init_scrape():
     settings = session['scrape']
+
     run_spider(settings)
 
-    items = {'items': settings['items']}
-    logger = settings['logger']
+    data = json.dumps({
+        'items': settings['items'],
+        'status': settings['logger'][-1]
+    })
 
-    return json.dumps(items if not 'error' in logger else logger)
+    return data
 
 
 
-@app.route('/import', methods=['POST'])
-def verify_import():
+@app.route('/import_review', methods=['POST'])
+def import_review():
     session['scrape'] = {
         'url': request.form['url'],
         'import_type': request.form['import-type'],
-        'status': 'Connecting...',
         'items': [],
-        'logger': {}, 
+        'logger': ['Connecting...'], 
         'login': {
             'id': request.form['id'],
             'email': request.form['email'],
@@ -181,8 +184,8 @@ def verify_import():
 
 
 
-@app.route("/begin_import", methods=['POST'])
-def begin_import():
+@app.route("/import", methods=['POST'])
+def import_products():
     bc_data = session['bc_data']
     user_id = bc_data['user'].get('id')
     store_owner = StoreOwner.query.get(int(user_id))
@@ -193,8 +196,9 @@ def begin_import():
         store = BigCommerceStore(store_owner, client_id(), client_secret())
 
     get_id = lambda r : r.json().get('data', {}).get('id', None) if r is not None else False
+    get_url = lambda r : r.json().get('data', {}).get('custom_url', {}).get('url', None) if r is not None else False
     get_opts = lambda r : r.json().get('data', {}).get('option_values', None) if r is not None else False
-    get_json = lambda r : r.json() if r is not None and r.status_code != 200 else {}
+    get_json = lambda r : r.json() if r is not None and r.status_code != 200 else None
 
     for product in products:
         product_resp = store.create_product(product)
@@ -202,6 +206,7 @@ def begin_import():
         status = {
             'name': product['name'],
             'id': get_id(product_resp),
+            'url': get_url(product_resp),
             'json': get_json(product_resp),
             'modifiers': []
         }
@@ -221,12 +226,6 @@ def begin_import():
         results.append(status)
 
     return render_template('results.html', data=json.dumps(results))
-
-
-
-@app.route("/cancel_import", methods=['POST'])
-def cancel_import():
-    return render_template('import.html')
 
 
 

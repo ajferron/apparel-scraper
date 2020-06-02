@@ -34,7 +34,6 @@ class SanmarSpider(scrapy.Spider):
 
     def after_login(self, response):
         if 'login' in response.url:
-            self.logger['error'] = 'Failed login'
             return
 
         return [scrapy.Request(url=url, meta={'product': self.is_product}) for url in self.start_urls]

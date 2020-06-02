@@ -58,7 +58,7 @@
 }
 
 #site-login .title span {
-    margin-right: 5px;
+    margin-right: 0 /* 5px */;
 }
 
 #site-login .input-wrapper {
