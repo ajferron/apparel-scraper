@@ -12,7 +12,7 @@ import json
 crochet.setup()
 runner = CrawlerRunner()
 
-test_data = json.load(open('./utils/data.json', 'r'))
+# test_data = json.load(open('./utils/data.json', 'r'))
 
 
 def verify_sig(signed_payload, client_secret):
