@@ -1,5 +1,5 @@
-from flask import Flask, request, session, render_template, make_response, jsonify, url_for
-from utils import BigCommerceStore, verify_sig, test_data, run_spider
+from flask import Flask, request, session, render_template, make_response
+from utils import BigCommerceStore, verify_sig, run_spider
 from flask_sqlalchemy import SQLAlchemy
 import dotenv
 import requests
@@ -7,6 +7,26 @@ import json
 import os
 
 DEBUG = False
+
+
+
+# PROJECT STATE (June 2, 2020)
+
+#   Imports are too slow (look at async solutions, minimizing # of requests)
+#   Add spiders for Trimark, Debco, TechnoSport
+#   Figure out how to communicate with spiders
+#   Review page could use some work (scaling, category selector)
+#   Get product categories with API
+#   Remove hardcoded site data
+#   Make use of app.debug
+
+
+# OTHER IMPROVEMENTS
+
+#   Have users create an account with the app
+#   Allow them to save login information for suppliers
+
+
 
 app = Flask(__name__)
 
@@ -18,6 +38,7 @@ app.config['APP_CLIENT_SECRET'] = os.getenv('APP_CLIENT_SECRET')
 app.config['SESSION_SECRET'] = os.getenv('SESSION_SECRET')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 
 
 def client_id():
@@ -157,12 +178,10 @@ def init_scrape():
 
     run_spider(settings)
 
-    data = json.dumps({
+    return json.dumps({
         'items': settings['items'],
         'status': settings['logger'][-1]
     })
-
-    return data
 
 
 
