@@ -12,7 +12,32 @@ import json
 crochet.setup()
 runner = CrawlerRunner()
 
-# test_data = json.load(open('./utils/data.json', 'r'))
+
+class Logger:
+    PURPLE = '\033[95m'
+    ORANGE = '\033[94m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    RED = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+    def __init__(self, debug):
+        self.debug = debug
+
+    def info(self, s):
+        self.log(Logger.YELLOW, f'[-] {s}')
+
+    def success(self, s):
+        self.log(Logger.GREEN, f'[+] {s}')
+
+    def error(self, s):
+        self.log(Logger.RED, f'[!] {s}')
+
+    def log(self, c, s):
+        if self.debug: print(f"{c}{s}{Logger.ENDC}")
+
 
 
 def verify_sig(signed_payload, client_secret):
@@ -24,7 +49,7 @@ def verify_sig(signed_payload, client_secret):
     expected_sig = hmac.new(client_secret.encode(), base64.b64decode(encoded_json), hashlib.sha256).hexdigest()
     authorized = hmac.compare_digest(signature, expected_sig.encode())
 
-    return json.loads(dc_json.decode()) if authorized else False
+    return json.loads(dc_json.decode()) if authorized else {}
 
 
 @crochet.wait_for(timeout=60)

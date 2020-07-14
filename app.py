@@ -1,16 +1,14 @@
 from flask import Flask, request, session, render_template, make_response
-from utils import BigCommerceStore, verify_sig, run_spider
+from utils import Logger, BigCommerceStore, verify_sig, run_spider
 from flask_sqlalchemy import SQLAlchemy
 import dotenv
 import requests
 import json
 import os
 
-DEBUG = False
 
 
-
-# PROJECT STATE (June 2, 2020)
+# PROJECT STATE (July 13, 2020)
 
 #   Imports are too slow (look at async solutions, minimizing # of requests)
 #   Add spiders for Trimark, Debco, TechnoSport
@@ -19,6 +17,9 @@ DEBUG = False
 #   Get product categories with API
 #   Remove hardcoded site data
 #   Make use of app.debug
+#   Make sure you can't access cookies from client
+#   Add some print statements damnit
+#   Add error screen
 
 
 # OTHER IMPROVEMENTS
@@ -40,7 +41,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 
-
 def client_id():
     return app.config['APP_CLIENT_ID']
 
@@ -53,18 +53,15 @@ def session_secret():
     return app.config['SESSION_SECRET']
 
 
-
+app.debug = os.getenv('DEBUG')
 app.secret_key = session_secret()
-
+logger = Logger(app.debug)
 db = SQLAlchemy(app)
 
+logger.success('app initialized')
 
 
 class StoreOwner(db.Model):
-    # in python env...
-    # from app import db
-    # db.createall()
-
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -73,7 +70,7 @@ class StoreOwner(db.Model):
     scope = db.Column(db.String(), unique=False)
     username = db.Column(db.String(), unique=True)
     email = db.Column(db.String(), unique=True)
-     
+
     def __init__(self, data):
         self.access_token = data['access_token']
         self.store_hash = data['context'].split('/')[1]
@@ -88,8 +85,13 @@ class StoreOwner(db.Model):
 def index():
     payload = request.args.get('signed_payload', '')
 
-    if 'bc_data' not in session:
-        session['bc_data'] = verify_sig(payload, client_secret()) if payload else {}
+    if not session.get('bc_data', False):
+        session['bc_data'] = verify_sig(payload, client_secret())
+
+        if payload and session['bc_data']:
+            logger.success('Verified signature')
+        else:
+            logger.error('Failed to verify signature')
 
     return render_template('index.html')
 
@@ -136,11 +138,11 @@ def authorize():
     data = {
         'client_id': client_id(),
         'client_secret': client_secret(),
+        'grant_type': 'authorization_code',
         'code': session['temp_auth'].get('code', ''),
         'scope': session['temp_auth'].get('scope', ''),
         'context': session['temp_auth'].get('context', ''),
-        'grant_type': 'authorization_code',
-        'redirect_uri': redirect['dev'] if DEBUG else redirect['prod']
+        'redirect_uri': redirect['dev'] if app.debug else redirect['prod']
     }
 
     session.pop('temp_auth', None)
@@ -148,16 +150,21 @@ def authorize():
     response = requests.post(url, headers=headers, data=data).json()
 
     if 'error' in response:
+        logger.error(f"Failed to authorize app\nResponse {response['error']}")
+
         return render_template('error.html', message=response['error'])
 
     user_id = int(response['user'].get('id'))
     store_owner = StoreOwner.query.get(user_id)
 
     if store_owner is not None:
+        logger.info('Deleting outdated credentials from DB')
         db.session.delete(store_owner)
 
     db.session.add(StoreOwner(response))
     db.session.commit()
+
+    logger.info('Store owner committed to DB')
 
     return render_template('index.html')
 
@@ -167,21 +174,23 @@ def authorize():
 def get_icon(file_name):
     response = make_response(render_template(f'icons/{file_name}.svg'))
     response.mimetype = 'image/svg+xml'
-    
+
     return response
 
 
 
 @app.route("/scrape")
 def init_scrape():
-    settings = session['scrape']
+    logger.info('Scraping product data')
 
-    run_spider(settings)
+    if app.debug:
+        with open('demo-product.json') as product:
+            return product.read()
 
-    return json.dumps({
-        'items': settings['items'],
-        'status': settings['logger'][-1]
-    })
+    else:
+        run_spider(session['scrape'])
+
+        return json.dumps({'items': session['scrape'].get('items')})
 
 
 
@@ -189,13 +198,13 @@ def init_scrape():
 def import_review():
     session['scrape'] = {
         'url': request.form['url'],
+        'supplier': request.form['supplier'],
         'import_type': request.form['import-type'],
         'items': [],
-        'logger': ['Connecting...'], 
         'login': {
-            'id': request.form['id'],
-            'email': request.form['email'],
-            'pass': request.form['password'],
+            # 'id': request.form['id'],
+            # 'email': request.form['email'],
+            # 'pass': request.form['password'],
         }
     }
 

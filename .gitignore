@@ -1,4 +1,9 @@
+.env
+
 .vscode/
 examples/
 __pycache__/
-.env
+
+notes.txt
+demo-product.json
+API Credentials.txt
