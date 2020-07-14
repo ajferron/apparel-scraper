@@ -1,98 +1,24 @@
 #import-form {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 500px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 500px;
+  top: 35%;
 }
-
 #import-form header {
-    margin-bottom: 35px;
-    font-size: 24px;
-    font-weight: normal;
-    width: 100%;
+  margin-bottom: 35px;
+  font-size: 18px;
+  font-weight: normal;
+  width: 500px;
+  top: 10%;
 }
-
-
-
-.multi-btn {
-    border: 1px solid var(--main);
-    border-radius: 5px;
-    margin: 15px 0;
-    width: 100%;
-    overflow: hidden;
+#import-form .custom-select {
+  border-radius: 0;
 }
-
-.multi-btn .item {
-    display: inline-block;
-    box-sizing: border-box;
-    text-align: center;
-    vertical-align: text-top;
-    padding: 2.5px 0;
-    font-size: 14px;
-    cursor: pointer;
-    width: 50%;
+#import-form .custom-select:focus {
+  border-color: #495057;
+  box-shadow: none;
 }
-
-.multi-btn .item.active {
-    background-color: var(--main);
-    font-weight: 900;
-    color: white;
-}
-
-
-
-#site-login {
-    width: 100%;
-    border: 1px solid var(--light);
-    border-radius: 10px;
-    margin: 35px 0 45px;
-}
-
-#site-login .title {
-    display: inline-block;
-    position: relative;
-    background-color: white;
-    padding: 0 7.5px;
-    margin: 0 15px;
-    top: -10px;
-}
-
-#site-login .title span {
-    margin-right: 0 /* 5px */;
-}
-
-#site-login .input-wrapper {
-    margin: 0 20px;
-}
-
-#site-login .labelled-input {
-    display: inline-flex;
-    margin-bottom: 15px;
-    width: 100%;
-    height: 30px;
-}
-
-#site-login .labelled-input:last-child {
-    margin-bottom: 20px;
-}
-
-#site-login .labelled-input .label {
-    box-sizing: border-box;
-    border: 1px solid var(--main);
-    border-radius: 5px 0 0 5px;
-    background-color: var(--main);
-    font-weight: 600;
-    color: white;
-    padding: 4px 7.5px;
-    height: 100%;
-    font-size: 16px;
-}
-
-#site-login .labelled-input input {
-    box-sizing: border-box;
-    border: 1px solid var(--main);
-    border-radius: 0 5px 5px 0;
-    padding: 5px;
-    height: 100%;
-    font-size: 16px;
+#import-form .btn-group .btn.active {
+  background-color: #5a6268;
 }

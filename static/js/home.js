@@ -1,7 +1,7 @@
 $(document).ready(() => {
-    $('.multi-btn .item').on('click', function() {
+    $('.btn-group .btn').on('click', function() {
         if ($('#import-type').val() !== this.id) {
-            $('.multi-btn .item').toggleClass('active')
+            $('.btn-group .btn').toggleClass('active')
             $('#import-type').val(this.id)
         }
     })

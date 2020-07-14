@@ -1,0 +1,28 @@
+#import-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 500px;
+    top: 35%;
+
+    header {
+        margin-bottom: 35px;
+        font-size: 18px;
+        font-weight: normal;
+        width: 500px;
+        top: 10%;
+    }
+
+    .custom-select {
+        border-radius: 0;
+
+        &:focus {
+            border-color: #495057;
+            box-shadow: none;
+        }
+    }
+    
+    .btn-group .btn.active {
+        background-color: #5a6268;
+    }
+}
