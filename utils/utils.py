@@ -39,8 +39,9 @@ class Logger:
         if self.debug: print(f"{c}{s}{Logger.ENDC}")
 
 
-
 def verify_sig(signed_payload, client_secret):
+    if not signed_payload: return {}
+
     encoded_json, encoded_hmac = signed_payload.split('.')
 
     dc_json = base64.b64decode(encoded_json)

@@ -5,247 +5,108 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
-    <script src="../static/js/import.js"></script>
 
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro">
+    <meta content="width=device-width, initial-scale=1" name="viewport" />
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.quilljs.com/1.3.6/quill.snow.css">
+
     <link rel="stylesheet" href="../static/css/main.css">
     <link rel="stylesheet" href="../static/css/import.css">
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+
+    <script type="module" src="../static/js/import.js"></script>
 
     <title> Apparel Scraper </title>
 </head>
 
 <body>
-    <script id='product-template' type='text/template'>
-        <div class="product">
-            <div class="preview">
-                <div class="main-display">
-                    <img src="" alt=""/>
-                </div>
-                <div class="options"> 
 
+<!-- ######   #######  ##    ## ######## ######## ##    ## ########
+    ##    ## ##     ## ###   ##    ##    ##       ###   ##    ##
+    ##       ##     ## ####  ##    ##    ##       ####  ##    ##
+    ##       ##     ## ## ## ##    ##    ######   ## ## ##    ##
+    ##       ##     ## ##  ####    ##    ##       ##  ####    ##
+    ##    ## ##     ## ##   ###    ##    ##       ##   ###    ##
+     ######   #######  ##    ##    ##    ######## ##    ##    ##    -->
+
+
+    <div id="import-review">
+        <header class="row position-fixed w-100">
+            <div class="col pt-5 pb-4"></div>
+
+            <div class="col-8 d-flex pt-5 pb-4">
+                <div class="d-flex align-items-start flex-grow-1">
+                    <img class="mr-2" src="icons/logo.svg" />
+
+                    <div class="d-flex flex-column mt-2 mr-5">
+                        <h2 class="font-weight-normal"> Apparel Scraper </h2>
+                        <span class="font-weight-light text-muted"> 
+                            Product Review <span id="counter" class="ml-3"> </span>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center justify-content-end flex-grow-1 mb-3">
+                    <button id="upload" class="btn btn-outline-secondary btn-sm ml-5" data-toggle="modal" data-target="#cancel-modal" type="button"> Cancel </button>
+                    <button id="upload" class="btn btn-secondary btn-sm ml-2" data-toggle="modal" data-target="#confirm-modal" type="button"> Save </button>
                 </div>
             </div>
 
-            <div class="divider" style="width: 25px"></div>
+            <div class="col pt-5 pb-4"></div>
+        </header>
 
-            <form class="specs">
-                <fieldset>
-                    <div class="product-name input-wrapper">
-                        <label for="name"> Product Name </label>
-                        <input class="ghost" type="text" name="name">
-                    </div><!-- 
-                --><div class="product-sku input-wrapper">
-                        <label for="sku"> Product SKU </label>
-                        <input class="ghost" type="text" name="sku">
-                    </div>
-                </fieldset>
 
-                <table class="size-table">
-                    <tr class="sizes"> </tr>
-                    <tr class="prices"> </tr>
-                </table>
-
-                <div class="input-wrapper">
-                    <label> Product Description </label>
-                    <div class="product-description"></div>
-                </div>
-            </form>
-
-            <div class="divider" style="width: 40px"></div>
-
-            <div class="categories">
-                <h3> Category </h3>
-
-                <div class="category-wrapper">
-                    <div class="category">
-                        <input type="checkbox" name="apparel" value="19">
-                        <label for="apparel"> Apparel </label>
-
-                        <div class="category">
-                            <input type="checkbox" name="golf-shirts" value="187">
-                            <label for="golf-shirts"> Golf Shirts </label>
-                        </div>
-
-                        <div class="category">
-                            <input type="checkbox" name="imprint-setup" value="41">
-                            <label for="imprint-setup"> Imprint Setup </label>
-                        </div>
-
-                        <div class="category">
-                            <input type="checkbox" name="work-wear" value="47">
-                            <label for="work-wear"> Work Wear </label>
-                        </div>
-
-                        <div class="category">
-                            <input type="checkbox" name="woven-shirts" value="46">
-                            <label for="woven-shirts"> Woven Shirts </label>
-                        </div>
-
-                        <div class="category">
-                            <input type="checkbox" name="headwear" value="27">
-                            <label for="headwear"> Headwear </label>
-                        </div>
-
-                        <div class="category">
-                            <input type="checkbox" name="outerwear" value="23">
-                            <label for="outerwear"> Outerwear </label>
-                        </div>
-
-                        <div class="category">
-                            <input type="checkbox" name="active-wear" value="25">
-                            <label for="active-wear"> Active Wear </label>
-                        </div>
-
-                        <div class="category">
-                            <input type="checkbox" name="fleece-hoodies" value="21">
-                            <label for="fleece-hoodies"> Fleece & Hoodies </label>
-                        </div>
-
-                        <div class="category">
-                            <input type="checkbox" name="sport-shirts" value="24">
-                            <label for="sport-shirts"> Sports Shirts </label>
-                        </div>
-
-                        <div class="category">
-                            <input type="checkbox" name="tshirts" value="22">
-                            <label for="tshirts"> T-Shirts </label>
-                        </div>
-
-                        <div class="category">
-                            <input type="checkbox" name="pants-shorts" value="26">
-                            <label for="pants-shorts"> Pants/Shorts </label>
-                        </div>
-
-                        <div class="category">
-                            <input type="checkbox" name="ladies-only" value="28">
-                            <label for="ladies-only"> Ladies' Only </label>
-                        </div>
-
-                        <div class="category">
-                            <input type="checkbox" name="youth-only" value="29">
-                            <label for="youth-only"> Youth Only </label>
-                        </div>
-                    </div>
-
-                    <div class="category">
-                        <input type="checkbox" name="branding" value="20">
-                        <label for="branding"> Branding </label>
-
-                        <div class="category">
-                            <input type="checkbox" name="automotive" value="54">
-                            <label for="automotive"> Automotive </label>
-                        </div>
-
-                        <div class="category">
-                            <input type="checkbox" name="business" value="55">
-                            <label for="business"> Business </label>
-                        </div>
-
-                        <div class="category">
-                            <input type="checkbox" name="coolers-bags" value="53">
-                            <label for="coolers-bags"> Coolers & Lunch Bags </label>
-                        </div>
-
-                        <div class="category">
-                            <input type="checkbox" name="drinkware" value="50">
-                            <label for="drinkware"> Drinkware </label>
-                        </div>
-
-                        <div class="category">
-                            <input type="checkbox" name="outdoor" value="51">
-                            <label for="outdoor"> Outdoor </label>
-                        </div>
-
-                        <div class="category">
-                            <input type="checkbox" name="stationary-pens" value="56">
-                            <label for="stationary-pens"> Stationary & Pens </label>
-                        </div>
-
-                        <div class="category">
-                            <input type="checkbox" name="travel" value="52">
-                            <label for="travel"> Travel </label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </script>
-
-    <div id="content-wrapper" class="center">
-        <div id="left-col">
-            <button id="left-btn">
-                <img src="icons/l-arrow.svg" alt="">
-            </button>
-        </div>
-
-        <div id="main-col">
-            <header>
-                <h1> Product Review </h1>
-
-                <div>
-                    <button id="cancel" class="ghost-btn"> Cancel </button>
-                    <button id="upload" class="solid-btn"> Upload Products </button>
-                </div>
-            </header>
-
-            <div id="product-wrapper">
-                
+        <div class="row position-fixed w-100 h-100">
+            <div class="col d-flex align-items-center justify-content-end mr-5">
+                <button id="left-btn">
+                    <img src="icons/l-arrow.svg" alt="">
+                </button>
             </div>
 
-            <footer>
-                <span id="progress"> </span>
-            </footer>
+            <div class="col-8 mid"></div>
+
+            <div class="col d-flex align-items-center justify-content-start ml-5">
+                <button id="right-btn">
+                    <img src="icons/r-arrow.svg" alt="">
+                </button>
+            </div>
         </div>
 
-        <div id="right-col">
-            <button id="right-btn">
-                <img src="icons/r-arrow.svg" alt="">
-            </button>
+
+        <div class="row top flex-grow-1"></div>
+
+        <div class="row mid align-items-center w-100">
+            <div class="col"></div>
+
+            <div class="col-8 mid">
+                <div class="space"></div>
+
+                <form id="product-display" class="mt-3 w-100">
+
+                </form>
+            </div>
+
+            <div class="col"></div>
         </div>
+
+        <div class="row bot flex-grow-1"></div>
     </div>
 
 
 
-    <div id="confirm-dialog" class="dialog center">
-        <form action="/import" method="POST">
-            <div class="dialog-content">
-                <header>
-                    <h3> Confirm Import </h3>
-                    <button class="close" type="button" onclick="closeDialog('confirm-dialog')">
-                        <img src="icons/close.svg" alt="">
-                    </button>
-                </header>
+<!-- #######  ##     ## ######## ########  ##          ###    ##    ##  ######
+    ##     ## ##     ## ##       ##     ## ##         ## ##    ##  ##  ##    ##
+    ##     ## ##     ## ##       ##     ## ##        ##   ##    ####   ##
+    ##     ## ##     ## ######   ########  ##       ##     ##    ##     ######
+    ##     ##  ##   ##  ##       ##   ##   ##       #########    ##          ##
+    ##     ##   ## ##   ##       ##    ##  ##       ##     ##    ##    ##    ##
+     #######     ###    ######## ##     ## ######## ##     ##    ##     ###### -->
 
-                <span class="message"></span>
-            </div>
-
-            <input id="products" type="hidden" name="products" value="">
-
-            <input id="submit" type="submit" class="solid-btn" value="Confirm"/>
-        </form>
-    </div>
-
-    <div id="cancel-dialog" class="dialog center">
-        <form action="/" method="GET">
-            <div class="dialog-content">
-                <header>
-                    <h3> Cancel Import </h3>
-                    <button class="close" type="button" onclick="closeDialog('cancel-dialog')">
-                        <img src="icons/close.svg" alt="">
-                    </button>
-                </header>
-
-                <span class="message"> Are you sure you want to cancel? </span>
-            </div>
-
-            <input type="submit" class="solid-btn" value="Confirm"/>
-        </form>
-    </div>
 
     <div id="overlay"></div>
 
@@ -254,7 +115,7 @@
             <img src="icons/error.svg" alt="">
             <span id="error-status"> </span>
 
-            <input type="submit" class="solid-btn" value="Retry"/>
+            <button type="submit" class="btn btn-outline-secondary"> Retry </button>
         </form>
     </div>
 
@@ -262,6 +123,207 @@
         <img id="loading-icon" src="icons/load.svg" alt="">
         <span id="load-status"> </span>
     </div>
+
+
+
+<!--##     ##  #######  ########     ###    ##        ######
+    ###   ### ##     ## ##     ##   ## ##   ##       ##    ##
+    #### #### ##     ## ##     ##  ##   ##  ##       ##
+    ## ### ## ##     ## ##     ## ##     ## ##        ######
+    ##     ## ##     ## ##     ## ######### ##             ##
+    ##     ## ##     ## ##     ## ##     ## ##       ##    ##
+    ##     ##  #######  ########  ##     ## ########  ###### -->
+
+
+    <div class="modal fade" id="confirm-modal" tabindex="-1" role="dialog" aria-labelledby="confirm-modal-label" aria-hidden="true">
+        <div class="modal-dialog">
+            <form class="modal-content" action="/import" method="POST">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirm-modal-label"> Confirm Import </h5>
+
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true"> &times; </span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <input id="products" type="hidden" name="products" value="">
+
+                    <span class="message"></span>
+                </div>
+
+                <div class="modal-footer border-top-0">
+                    <button class="btn cancel btn-outline-secondary" type="button" data-dismiss="modal"> Cancel </button>
+                    <button class="btn confirm btn-secondary"type="submit" > OK </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal fade" id="cancel-modal" tabindex="-1" role="dialog" aria-labelledby="cancel-modal-label" aria-hidden="true">
+        <div class="modal-dialog">
+            <form class="modal-content" action="/" method="GET">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cancel-modal-label"> Cancel Import </h5>
+
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true"> &times; </span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <span class="message"> Are you sure you want to cancel the import? </span>
+                </div>
+
+                <div class="modal-footer border-top-0">
+                    <button class="btn btn-outline-secondary" type="button" data-dismiss="modal"> No </button>
+                    <button class="btn btn-secondary" type="submit" > Yes </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+
+<!-- ######   ######  ########  #### ########  ########  ######
+    ##    ## ##    ## ##     ##  ##  ##     ##    ##    ##    ##
+    ##       ##       ##     ##  ##  ##     ##    ##    ##
+     ######  ##       ########   ##  ########     ##     ######
+          ## ##       ##   ##    ##  ##           ##          ##
+    ##    ## ##    ## ##    ##   ##  ##           ##    ##    ##
+     ######   ######  ##     ## #### ##           ##     ###### -->
+
+    <script>
+        function expand(e) {
+            let all = $('.dropdown-submenu .dropdown-menu')
+            let dd = $(e.target).next('.dropdown-menu')
+
+            if (dd.is(":visible")) {
+                dd.hide()
+                return
+            }
+
+            all.hide()
+            dd.show()
+
+            e.stopPropagation();
+            e.preventDefault();
+        }
+
+
+        function setCategory(e) {
+            var target = $(e.target)
+
+            if ( target.is('input') ) {
+                var item = target.parent('.dropdown-item')
+
+            } else {
+                if ( target.is('.dropdown-item') )
+                    var item = target
+
+                if ( target.is('span') )
+                    var item = target.first().parent('.dropdown-item')
+
+                var box = item.find('input')
+                box.prop("checked", !box.prop('checked'))
+            }
+
+            let dropdown = target.closest('.category.dropdown')
+            let input = dropdown.find('input[name="category"]')
+
+            let btn = dropdown.find('button div')
+            let name = item.find('.name')
+            let label = btn.text().trim()
+            let category = name.text().trim()
+
+            if (label.includes(`, ${category}`))
+                btn.html(label.replace(`, ${category}`, ''))
+
+            else if (label.includes(category))
+                btn.html(label === category ? 'Choose...' : label.replace(`${category}, `, '') )
+
+            else
+                btn.html(label === 'Choose...' ? category : `${label}, ${category}`)
+
+            item.toggleClass('selected')
+            e.stopPropagation();
+
+            // e.preventDefault(); Do NOT uncomment this
+        }
+    </script>
+
+
+
+<!--######## ######## ##     ## ########  ##          ###    ######## ########  ######
+       ##    ##       ###   ### ##     ## ##         ## ##      ##    ##       ##    ##
+       ##    ##       #### #### ##     ## ##        ##   ##     ##    ##       ##
+       ##    ######   ## ### ## ########  ##       ##     ##    ##    ######    ######
+       ##    ##       ##     ## ##        ##       #########    ##    ##             ##
+       ##    ##       ##     ## ##        ##       ##     ##    ##    ##       ##    ##
+       ##    ######## ##     ## ##        ######## ##     ##    ##    ########  ###### -->
+
+
+    <script id='product-template' type='text/template'>
+        <div class="product row">
+            <div class="preview col">
+                <div class="carousel" data-ride="carousel">
+                    <div class="carousel-inner d-flex"></div>
+
+                    <a class="side-btn carousel-control-prev" role="button" data-slide="prev">
+                        <svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-caret-left-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M3.86 8.753l5.482 4.796c.646.566 1.658.106 1.658-.753V3.204a1 1 0 0 0-1.659-.753l-5.48 4.796a1 1 0 0 0 0 1.506z"/>
+                        </svg>
+                    </a>
+
+                    <a class="side-btn carousel-control-next" role="button" data-slide="next">
+                        <svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-caret-right-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12.14 8.753l-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/>
+                        </svg>
+                    </a>
+                    
+                    <ol class="carousel-indicators d-flex flex-wrap position-relative mt-3"></ol>
+                </div>
+            </div>
+
+            <div class="spec col-8">
+                <div class="form-row mb-3">
+                    <div class="col">
+                        <label class="mb-1" for="name"> Product Name </label>
+                        <input class="form-control form-control-lg w-100" name="name" type="text">
+                    </div>
+                </div>
+
+                <div class="form-row justify-content-between mb-4">
+                    <div class="col-4">
+                        <label class="mb-1" for="sku"> SKU </label>
+                        <input class="form-control" name="sku" type="text">
+                    </div>
+
+                    <div class="col">
+                        <label class="mb-1" for="category"> Category </label>
+
+                        <div class="category dropdown">
+                            <input type="hidden" name="category" value="">
+                            <button class="btn btn-outline-secondary dropdown-toggle w-100" type="button" data-toggle="dropdown"> 
+                                <div>Choose...</div> <span class="caret"></span>
+                            </button>
+
+                            <ul class="dropdown-menu"></ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sizes form-row justify-content-between mb-4"></div>
+
+                <div class="form-row justify-content-between mb-4">
+                    <div class="col">
+                        <label class="mb-1"> Product Description </label>
+                        <div class="product-description"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </script>
 </body>
 
 

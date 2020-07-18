@@ -2,23 +2,31 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 500px;
-  top: 35%;
+  height: 100%;
 }
-#import-form header {
+#import-form .row.top {
+  max-height: 75px;
+}
+#import-form .row.mid {
+  min-width: 750px;
+}
+#import-form .row.mid .col-5.mid {
+  min-width: 525px;
+}
+#import-form .row.mid .col-5.mid header {
   margin-bottom: 35px;
   font-size: 18px;
   font-weight: normal;
   width: 500px;
   top: 10%;
 }
-#import-form .custom-select {
+#import-form .row.mid .col-5.mid #supplier {
   border-radius: 0;
 }
-#import-form .custom-select:focus {
+#import-form .row.mid .col-5.mid #supplier:focus {
   border-color: #495057;
   box-shadow: none;
 }
-#import-form .btn-group .btn.active {
+#import-form .row.mid .col-5.mid .btn-group .btn.active {
   background-color: #5a6268;
 }

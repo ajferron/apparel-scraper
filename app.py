@@ -8,18 +8,15 @@ import os
 
 
 
-# PROJECT STATE (July 13, 2020)
+# PROJECT STATE (July 18, 2020)
 
-#   Imports are too slow (look at async solutions, minimizing # of requests)
+#   Imports are too slow (use corchet with EventualResult)
 #   Add spiders for Trimark, Debco, TechnoSport
 #   Figure out how to communicate with spiders
-#   Review page could use some work (scaling, category selector)
-#   Get product categories with API
 #   Remove hardcoded site data
-#   Make use of app.debug
 #   Make sure you can't access cookies from client
-#   Add some print statements damnit
-#   Add error screen
+#   Set up error screen
+#   Look into obfuscator
 
 
 # OTHER IMPROVEMENTS
@@ -187,10 +184,29 @@ def init_scrape():
         with open('demo-product.json') as product:
             return product.read()
 
-    else:
-        run_spider(session['scrape'])
+    run_spider(session['scrape'])
 
-        return json.dumps({'items': session['scrape'].get('items')})
+    return {'items': session['scrape'].get('items')}
+
+
+
+@app.route("/categories", methods=['GET'])
+def get_categories():
+    logger.info('Getting product categories from store')
+
+    if app.debug:
+        with open('demo-categories.json') as categories:
+            return json.loads(categories.read())
+
+    bc_data = session['bc_data']
+    user_id = bc_data['user'].get('id')
+    store_owner = StoreOwner.query.get(int(user_id))
+
+    store = BigCommerceStore(store_owner, client_id(), client_secret())
+
+    data = store.get_categories()
+
+    return data.json()
 
 
 

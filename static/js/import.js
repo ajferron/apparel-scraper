@@ -1,201 +1,95 @@
-var inDialog = false
-var currProduct = 0
+import ProductDisplay from './model/ProductDisplay.js'
+import SubMenu from './model/SubMenu.js'
+
 var products
+var active = 0
+
 
 $(document).ready(() => {
-    $('#content-wrapper').hide()
-    $('#error-wrapper').hide()
     $('#overlay').hide()
 
-    $.ajax({
-        type: "GET",
-        url: '/scrape',
-        data: null,
-        success: (data) => {
-            data = JSON.parse(data)
-
+    fetch('/scrape', {method: 'GET', credentials: 'same-origin'})
+        .then(response => response.json())
+        .then(response => {
             $('#load-wrapper').hide()
 
-            if (data.items && !data.items.length) {
-                $('#error-wrapper').show()
-                $('#error-status').html('Could not get data. <br> Check login creditentials, settings, and the URL.')
+            if (response.items && !response.items.length)
+                throw new Error('Could not get data. <br> Check login creditentials, settings, and the URL.')
+            else
+                return response.items.map(p => new ProductDisplay(p))
+        })
+        .then(displays => {
+            products = displays
+            displays[0].display.show()
 
-            } else {
-                $('#content-wrapper').show()
-    
-                products = data.items.map(p => makeDisplay(p))
-                products[currProduct].display.show()
-    
-                $('#progress').text(`${currProduct+1}/${products.length}`)
-    
-                $('.category label').click(function() {
-                    $(this).siblings('input').trigger('click')
+            $('#counter').text(`${active+1}/${products.length}`)
+
+            $('#import-review').show()
+
+            $('#progress').text(`${active+1} / ${displays.length}`)
+
+            fetch('/categories', {method: 'GET', credentials: 'same-origin'})
+                .then(response => response.json())
+                .then(response => response.data)
+                .then(categories => categories.map(({name, id, parent_id}) => ({name, id, parent_id})))
+                .then(categories => {
+                    // Divide categories into parent and children categories
+                    var [children, parents] = categories.reduce((arr, c) => {
+                        arr[c.parent_id ? 0 : 1].push(c)
+                        return arr
+
+                    }, [[], []])
+
+                    // Map each parent to a new submenu (it will contain more items)
+                    var submenus = parents.map(p => new SubMenu(p)) /* .sort((a, b) => a.name.localeCompare(b.name)) */
+
+                    // Add each parent's children as an item
+                    submenus.forEach(m => m.addItems(children.filter(c => c.parent_id === m.id)))
+
+                    // Append submenues to each product display dropdown
+                    displays.forEach(p => p.display.find('.category .dropdown-menu').append(submenus.map(m => m.dropdown.clone())))
                 })
-            }
-        }
-    })
+        })
+        .catch(error => {
+            $('#error-wrapper').show()
+            $('#error-status').html(error)
+        })
 
 
     $('#right-btn').click(() => {
-        if (currProduct !== products.length-1) {
-            products[currProduct].display.hide()
-            products[++currProduct].display.show()
-            $('#progress').text(`${currProduct+1}/${products.length}`)
+        if (active !== products.length-1) {
+            products[active].display.hide()
+            products[++active].display.show()
+
+            $('#counter').text(`${active+1}/${products.length}`)
         }
     })
 
 
     $('#left-btn').click(() => {
-        if (currProduct > 0) {
-            products[currProduct].display.hide()
-            products[--currProduct].display.show()
-            $('#progress').text(`${currProduct+1}/${products.length}`)
+        if (active > 0) {
+            products[active].display.hide()
+            products[--active].display.show()
+
+            $('#counter').text(`${active+1}/${products.length}`)
         }
     })
 
 
-    $('#upload').click(() => {
-        let dialog = $('#confirm-dialog')
-        let data = getProductData()
+    $('#confirm-modal').on('shown.bs.modal', function (e) {
+        let errors = products.map((p, i) => p.validate(i+1)).join('')
 
-        if (data) {
-            dialog.find('.message').text(`Upload ${products.length} products?`)
-            dialog.find('#products').val(JSON.stringify(data))
+        if (!errors) {
+            $(this).find('.message').html(`Upload ${products.length} product${products.length > 1 ? 's' : ''}?`)
 
-            dialog.show()
-            inDialog = true
+            $(this).find('#products').val(JSON.stringify(products.map(p => p.output))) 
+
+            $(this).find('button.confirm').show()
+
+        } else {
+            $(this).find('.message').html(`Please fix the following before uploading:<br>${errors}`)
+
+            $(this).find('button.confirm').hide()
         }
-    })
-
-
-    $('#cancel').click(() => {
-        $('#cancel-dialog').show()
-        inDialog = true
-    })
-
-    $('#submit').click(() => {
-        $('#confirm-dialog').hide()
-        $('#load-wrapper').show()
-        $('#overlay').show()
     })
 })
-
-
-
-function makeDisplay(product) {
-    let productID = `product-${product.sku}`
-    var display = $($("#product-template").html())
-
-    nameField = display.find('.product-name input')
-    skuField = display.find('.product-sku input')
-    descField = display.find('.product-description')
-    sizeFields = appendSizes(display, product.sizes)
-    images = appendImages(display, product.swatch)
-
-    nameField.val(product.name.replace('', '™'))
-    skuField.val(product.sku)
-    descField.html(product.description)
-    display.attr('id', productID)
-
-    $('#product-wrapper').append(display)
-
-    descEditor = initEditor(productID)
-
-    display.hide()
-
-    return {
-        display: display,
-        data: {
-            name: nameField, 
-            sku: skuField, 
-            desc: descEditor,
-            sizes: sizeFields,
-            swatch: images,
-        }
-    }
-}
-
-function initEditor(id) {
-    let editor = new Quill(`#${id} .product-description`, {
-        modules: {
-            toolbar: [
-                ['bold', 'italic', 'underline'],
-                [{ list: 'ordered' }, { list: 'bullet' }]
-            ]
-        },
-        placeholder: 'Product description...',
-        theme: 'snow'
-    })
-
-    return editor.root.innerHTML
-}
-
-function appendSizes(display, sizes) {
-    return Object.keys(sizes).map(size => {
-        price = (Number(sizes[size]) + 15).toFixed(2)
-
-        sizeElem = $(`<th> <label for="${size}"> ${size} </label> </th>`)
-        priceElem = $(`<td> <input class="ghost" type="text" name="${price}" value=${price}> </td>`)
-
-        display.find('.size-table .sizes').append(sizeElem)
-        display.find('.size-table .prices').append(priceElem)
-
-        return { size, price: priceElem.find('input') }
-    })
-}
-
-function appendImages(display, swatch) {
-    for (color in swatch) {
-        let img = $(`<img src="${swatch[color]}" alt="${color}"/>`)
-
-        img.click(function() { 
-            display.find('.main-display img').attr('src', this.src) 
-        })
-
-        if (color === 'Thumbnail')
-            display.find('.main-display img').attr('src', img[0].src)
-
-        display.find('.options').append(img)
-    }
-
-    return swatch // Set up adding/removing images
-}
-
-
-function getProductData() {
-    let getSizes = (sizes) => {
-        return sizes.map(({price, size}) => ({size, price: price.val()}))
-    }
-
-    let getCategories = (display) => {
-        return display.find('input:checkbox:checked').map(function() {
-            return Number( $(this).val() )
-        }).get()
-    }
-
-    let data = products.map(p => {
-        let product = {
-            name: p.data.name.val(),
-            sku: p.data.sku.val(),
-            desc: p.data.desc,
-            swatch: p.data.swatch,
-            sizes: getSizes(p.data.sizes),
-            categories: getCategories(p.display)
-        }
-
-        if (product.categories.length == 0) {
-            alert(`Select a category for product "${p.data.name.val()}"`)
-            return false
-        }
-
-        return product
-    })
-
-    return !data.includes(false) ? data : false
-}
-
-
-function closeDialog(id) {
-    $(`#${id}`).hide()
-    inDialog = false
-}

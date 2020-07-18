@@ -8,14 +8,18 @@ class BigCommerceStore():
         self.client_secret = client_secret
         self.client_id = client_id
 
-
-    def headers(self):
-        return {
+        self.headers = {
             'content-type': "application/json",
             'accept': "application/json",
             'x-auth-client': self.client_id,
             'x-auth-token': self.access_token
         }
+
+
+    def get_categories(self):
+        url = "https://api.bigcommerce.com/stores/i32da/v3/catalog/categories"
+
+        return requests.get(url, headers=self.headers)
 
 
     def create_product(self, product):
@@ -24,7 +28,7 @@ class BigCommerceStore():
         data = {
             'name': product['name'],
             'sku': product['sku'],
-            'description': product['desc'],
+            'description': product['description'],
             'type': 'physical',
             'images': [],
             'weight': 0,
@@ -40,13 +44,13 @@ class BigCommerceStore():
                 'sort_order': i
             })
 
-        return requests.post(url, headers=self.headers(), data=json.dumps(data))
+        return requests.post(url, headers=self.headers, data=json.dumps(data))
 
 
     def delete_product(self, product_id):
         url = f'https://api.bigcommerce.com/stores/{self.store_hash}/v3/catalog/products/{product_id}'
 
-        requests.delete(url, headers=self.headers())
+        requests.delete(url, headers=self.headers)
 
 
     def create_size_modifier(self, product_id, product):
@@ -72,7 +76,7 @@ class BigCommerceStore():
                 }
         })
  
-        return requests.post(url, headers=self.headers(), data=json.dumps(data))
+        return requests.post(url, headers=self.headers, data=json.dumps(data))
 
 
     def create_color_modifier(self, product_id, product):
@@ -101,7 +105,7 @@ class BigCommerceStore():
                     "value_data": image_url
                 })
         
-        response = requests.post(url, headers=self.headers(), data=json.dumps(data))
+        response = requests.post(url, headers=self.headers, data=json.dumps(data))
         
         return {
             'response': response,
@@ -112,4 +116,4 @@ class BigCommerceStore():
     def update_modifier(self, product_id, modifier_id, val_id, adjuster):
         url = f'https://api.bigcommerce.com/stores/{self.store_hash}/v3/catalog/products/{product_id}/modifiers/{modifier_id}/values/{val_id}'
         
-        return requests.put(url, headers=self.headers(), data=json.dumps(adjuster))
+        return requests.put(url, headers=self.headers, data=json.dumps(adjuster))

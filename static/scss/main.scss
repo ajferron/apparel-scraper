@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
 * {
     margin: 0;
     padding: 0;
@@ -5,25 +7,31 @@
     color: #495057;
 }
 
-h1, h2, h3, h4, h5 {
-    margin: 0;
-    padding: 0;
-}
+body {
+    width: 100vw;
+    height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
 
-.center {
-    display: inline-block;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
-    
-.form-control:focus,
-.custom-select:focus {
-    border-color: #495057;
-    box-shadow: 0 0 0 0.2rem #49505725;
-}
+    h1, h2, h3, h4, h5 {
+        margin: 0;
+        padding: 0;
+    }
 
+    .center {
+        display: inline-block;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    .form-control:focus,
+    .custom-select:focus {
+        border-color: #495057;
+        box-shadow: 0 0 0 0.2rem #49505725;
+    }
+}
 
 
 ::-webkit-scrollbar {
@@ -32,26 +40,22 @@ h1, h2, h3, h4, h5 {
 
 ::-webkit-scrollbar-track,
 ::-webkit-scrollbar-thumb {
-	background-clip: padding-box;
+    background-clip: padding-box;
     border: 10px solid transparent;
-    border-top: none;
-    border-bottom: none;
     transition: 0.5s ease;
 }
 
 ::-webkit-scrollbar-track {
-	background-color: var(--lighter);
+    background-color: var(--lighter);
 }
 
 ::-webkit-scrollbar-thumb {
-	background-color: var(--light);
+    background-color: #ced4da;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-	background-color: var(--main);
+    background-color: #495057;
     border: 9px solid transparent;
-    border-top: none;
-    border-bottom: none;
 }
 
 ::-webkit-scrollbar-button {
