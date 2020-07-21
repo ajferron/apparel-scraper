@@ -1,32 +1,47 @@
-#import-form {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  height: 100%;
+#import-form .col-7 {
+  min-width: 500px;
+  max-width: 750px;
 }
-#import-form .row.top {
-  max-height: 75px;
+#import-form .col-7 .row.top header {
+  font-size: 18px;
 }
-#import-form .row.mid {
-  min-width: 750px;
+#import-form .col-7 .row.top header a img {
+  opacity: 0.65;
+  transition: 0.3s ease-in-out;
 }
-#import-form .row.mid .col-5.mid {
-  min-width: 525px;
+#import-form .col-7 .row.top header a:hover img {
+  opacity: 1;
 }
-#import-form .row.mid .col-5.mid header {
+#import-form .col-7 .row.top header a #badge {
+  display: none;
+  position: absolute;
+  background: #dc3545;
+  border: 2.5px solid white;
+  border-radius: 50%;
+  color: white;
+  font-size: 9px;
+  text-align: center;
+  width: 17.5px;
+  height: 17.5px;
+  top: -4px;
+  left: -9px;
+  transition: 0.3s ease-in-out;
+}
+#import-form .col-7 .row.mid header {
   margin-bottom: 35px;
   font-size: 18px;
   font-weight: normal;
   width: 500px;
   top: 10%;
 }
-#import-form .row.mid .col-5.mid #supplier {
+#import-form .col-7 .row.mid .input-group-append #supplier {
   border-radius: 0;
+  cursor: pointer;
 }
-#import-form .row.mid .col-5.mid #supplier:focus {
+#import-form .col-7 .row.mid .input-group-append #supplier:focus {
   border-color: #495057;
   box-shadow: none;
 }
-#import-form .row.mid .col-5.mid .btn-group .btn.active {
+#import-form .col-7 .row.mid .btn-group .btn.active {
   background-color: #5a6268;
 }

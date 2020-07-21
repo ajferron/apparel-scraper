@@ -24,14 +24,12 @@
 </head>
 
 <body>
-    <div id="import-form">
-        <div class="row top flex-grow-1"></div>
+    <div id="import-form" class="row h-100">
+        <div class="col h-100"></div>
 
-        <div class="row mid align-items-center w-100">
-            <div class="col"></div>
-
-            <div class="col-5 mid">
-                <header class="d-flex w-100 my-4">
+        <div class="col-7 h-100">
+            <div class="row top flex-grow-1 w-100 pt-5 mt-5 mb-4">
+                <header class="d-flex pb-4 w-100">
                     <div class="d-flex align-items-start flex-grow-1">
                         <img class="mr-2" src="icons/logo.svg" />
                         
@@ -40,15 +38,21 @@
                             <span class="font-weight-light text-muted"> Product Import </span>
                         </div>
                     </div>
-
+    
                     <div class="d-flex align-items-center flex-grow-1 justify-content-end mb-3">
-                        <a href="/user_profile">
-                            <img src="icons/user-circle.svg" />
+                        <a class="pr-4" href="/product-uploads">
+                            <img src="icons/server.svg" />
+                            <div id="badge" class="font-weight-bold">9</div>
+                        </a>
+                        <a href="/user-settings">
+                            <img src="icons/user-settings.svg" />
                         </a>
                     </div>
                 </header>
+            </div>
 
-                <form id="import-form" action="/import_review" method="POST">
+            <div class="row mid align-items-center w-100">
+                <form id="import-form" class="col mid" action="/import-review" method="POST">
                     <div class="input-group input-group-lg my-3">
                         <input class="form-control" name="url" placeholder="URL" type="url">
 
@@ -63,7 +67,7 @@
                         </div>
                     </div>
 
-                    <div class="form-group row w-100 mb-5">
+                    <div class="form-group w-100 mb-5">
                         <div class="btn-group btn-group-sm w-100" role="group" aria-label="Basic example">
                             <button id="single" class="btn btn-secondary w-100 active" type="button"> Single Product </button>
                             <button id="page" class="btn btn-secondary w-100" type="button"> Page of Products </button>
@@ -76,10 +80,10 @@
                 </form>
             </div>
 
-            <div class="col"></div>
+            <div class="row bot flex-grow-1"></div>
         </div>
-
-        <div class="row bot flex-grow-1"></div>
+            
+        <div class="col h-100"></div>
     </div>
 </body>
 

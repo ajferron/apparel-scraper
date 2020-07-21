@@ -1,76 +1,73 @@
 #import-review {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    height: 100%;
+    max-height: 100vh;
+    overflow: hidden;
 
-    header {
-        box-shadow: 0px 0px 1px rgba(255, 255, 255, 0.04), 0px 2px 6px rgba(255, 255, 255, 0.04), 0px 16px 24px rgba(255, 255, 255, 0.06);
-        background: white;
-        font-size: 18px;
-        top: 0;
-        right: 0;
-        z-index: 1000;
+    #right-btn, #left-btn {
+        background: none;
+        border: none;
+        transition: .15s ease-in-out;
 
-        .col-8 {
-            min-width: 550px;
-            border-bottom: 1px solid #ececec;
+        &:focus {
+            outline: none;
         }
     }
 
-
-    .row.top {
-        max-height: 75px;
+    #right-btn:hover {
+        transform: translateX(5px) scale(1.05);
     }
 
-    .row.mid {
-        .col-8 {
-            display: flex;
-            flex-direction: column;
-            max-height: 100vh;
-            min-width: 550px;
+    #left-btn:hover {
+        transform: translateX(-5px) scale(1.05);
+    }
 
-            .space {
-                height: 100px;
-                flex-shrink: 0;
 
-                @media screen and (max-width: 1280px) {
-                    height: 155px;
+    .col-8 {
+        min-width: 550px;
 
-                    /* Safari Only
-                        @media not all and (min-resolution:.001dpcm) {
-                            @supports (-webkit-appearance:none) {}
-                        } 
-                    */
-                }
+        @media screen and (max-width: 1200px) {
+            flex: 1;
+        }
 
-                @media screen and (max-height: 755px) {
-                    height: 155px;
-                }
+        .blur {
+            height: 50px;
+            background: white;
+            background: linear-gradient(0deg, white, rgba(255,255,255,0));
+            background: -webkit-linear-linear-gradient(0deg, white, rgba(255,255,255,0));
+        }
+
+        .row.top {
+            border-bottom: 1px solid #ececec;
+
+            header {
+                font-size: 18px;
+            }
+        }
+
+        .row.mid#product-display {
+            overflow-y: auto;
+            overflow-x: hidden;
+
+            &::-webkit-scrollbar {
+                display: none;
             }
 
             .product.row {
-                @media screen and (max-width: 1280px) {
+                @media screen and (max-width: 1200px) {
                     flex-direction: column;
-
-                    .spec {
-                        max-width: 100%;
-                    }
-
-                    .preview.col .carousel-inner img {
-                        height: 200px !important;
-                    }
+                    -webkit-flex-direction: row;
                 }
 
                 .preview.col {
                     .carousel-inner {
                         img {
                             height: 400px;
-                        }
 
-                        @media screen and (max-width: 1500px) {
-                            img {
+                            @media screen and (max-width: 1500px) {
                                 height: 300px;
+                            }
+
+                            @media screen and (max-width: 1200px) {
+                                height: 200px;
                             }
                         }
                     }
@@ -93,6 +90,10 @@
                 }
 
                 .spec {
+                    @media screen and (max-width: 1200px) {
+                        max-width: 100%;
+                    }
+
                     .category.dropdown {
                         button {
                             display: flex;
@@ -160,25 +161,6 @@
             }
         }
     }
-
-    #right-btn, #left-btn {
-        background: none;
-        border: none;
-        transition: .15s ease-in-out;
-
-        &:focus {
-            outline: none;
-        }
-    }
-
-    #right-btn:hover {
-        transform: translateX(5px) scale(1.05);
-    }
-
-    #left-btn:hover {
-        transform: translateX(-5px) scale(1.05);
-    }
-
     .ql-toolbar.ql-snow {
         border: 1px solid #ced4da;
         border-radius: 5px 5px 0 0;
