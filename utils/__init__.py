@@ -1,3 +1,3 @@
 import scrapy
-from .store import BigCommerceStore
-from .utils import Logger, verify_sig, run_spider
+from .bigcommerce.store import BigCommerceStore
+from .utils import Logger, verify_sig, run_spider, get_result

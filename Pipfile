@@ -16,6 +16,7 @@ gunicorn = "*"
 requests = "*"
 python-dotenv = "*"
 crochet = "*"
+click = "*"
 
 [requires]
 python_version = "3.8"

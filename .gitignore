@@ -1,9 +1,8 @@
 .env
 
 .vscode/
-examples/
-__pycache__/
 
 notes.txt
 demo-product.json
+demo-categories.json
 API Credentials.txt

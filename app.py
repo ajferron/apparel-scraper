@@ -1,6 +1,7 @@
 from flask import Flask, request, session, render_template, make_response
-from utils import Logger, BigCommerceStore, verify_sig, run_spider
+from utils import BigCommerceStore, Logger, verify_sig, run_spider, get_result
 from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime, timedelta
 import dotenv
 import requests
 import json
@@ -8,12 +9,10 @@ import os
 
 
 
-# PROJECT STATE (July 18, 2020)
+# PROJECT STATE (July 31, 2020)
 
-#   Imports are too slow (use corchet with EventualResult)
 #   Add spiders for Trimark, Debco, TechnoSport
 #   Figure out how to communicate with spiders
-#   Remove hardcoded site data
 #   Make sure you can't access cookies from client
 #   Set up error screen
 #   Look into obfuscator
@@ -34,6 +33,7 @@ if os.path.exists('.env'):
 app.config['APP_CLIENT_ID'] = os.getenv('APP_CLIENT_ID')
 app.config['APP_CLIENT_SECRET'] = os.getenv('APP_CLIENT_SECRET')
 app.config['SESSION_SECRET'] = os.getenv('SESSION_SECRET')
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -50,12 +50,15 @@ def session_secret():
     return app.config['SESSION_SECRET']
 
 
-app.debug = os.getenv('DEBUG')
 app.secret_key = session_secret()
+
+app.debug = os.getenv('DEBUG')
+
 logger = Logger(app.debug)
 db = SQLAlchemy(app)
 
 logger.success('app initialized')
+
 
 
 class StoreOwner(db.Model):
@@ -78,9 +81,18 @@ class StoreOwner(db.Model):
 
 
 
+@app.before_request
+def reset_session_timeout():
+    session.modified = True
+
+
+
 @app.route('/')
 def index():
-    payload = request.args.get('signed_payload', '')
+    payload = request.args.get('signed_payload', False)
+
+    # if not verify_sig(payload, client_secret()):
+        # return render_template('nope.html')
 
     if not session.get('bc_data', False):
         session['bc_data'] = verify_sig(payload, client_secret())
@@ -89,6 +101,8 @@ def index():
             logger.success('Verified signature')
         else:
             logger.error('Failed to verify signature')
+
+        session.permanent = True
 
     return render_template('index.html')
 
@@ -127,6 +141,7 @@ def uninstall():
 def authorize():
     url = 'https://login.bigcommerce.com/oauth2/token'
     headers = {'content-type': 'application/x-www-form-urlencoded'}
+
     redirect = {
         'prod': 'https://apparel-scraper.herokuapp.com/auth',
         'dev': 'http://127.0.0.1:5000/auth'
@@ -148,20 +163,19 @@ def authorize():
 
     if 'error' in response:
         logger.error(f"Failed to authorize app\nResponse {response['error']}")
-
         return render_template('error.html', message=response['error'])
 
     user_id = int(response['user'].get('id'))
-    store_owner = StoreOwner.query.get(user_id)
+    owner = StoreOwner.query.get(user_id)
 
-    if store_owner is not None:
+    if owner is not None:
         logger.info('Deleting outdated credentials from DB')
-        db.session.delete(store_owner)
+        db.session.delete(owner)
 
     db.session.add(StoreOwner(response))
     db.session.commit()
 
-    logger.info('Store owner committed to DB')
+    logger.success('Store owner committed to DB')
 
     return render_template('index.html')
 
@@ -210,7 +224,7 @@ def get_categories():
 
 
 
-@app.route('/import_review', methods=['POST'])
+@app.route('/import-review', methods=['POST'])
 def import_review():
     session['scrape'] = {
         'url': request.form['url'],
@@ -232,44 +246,62 @@ def import_review():
 def import_products():
     bc_data = session['bc_data']
     user_id = bc_data['user'].get('id')
-    store_owner = StoreOwner.query.get(int(user_id))
+    owner = StoreOwner.query.get(int(user_id))
     products = json.loads(request.form['products'])
-    results = []
 
-    if store_owner is not None:
-        store = BigCommerceStore(store_owner, client_id(), client_secret())
+    if owner is not None:
+        store = BigCommerceStore(owner, client_id(), client_secret())
+        logger.success('Set up user store')
+    else:
+        logger.error('Import Failed: could not find store owner')
+        return render_template('results.html', message='Could not find your store!')
 
-    get_id = lambda r : r.json().get('data', {}).get('id', None) if r is not None else False
-    get_url = lambda r : r.json().get('data', {}).get('custom_url', {}).get('url', None) if r is not None else False
-    get_opts = lambda r : r.json().get('data', {}).get('option_values', None) if r is not None else False
-    get_json = lambda r : r.json() if r is not None and r.status_code != 200 else None
+    if 'uploads' not in session:
+        session['uploads'] = []
 
     for product in products:
-        product_resp = store.create_product(product)
+        time = datetime.now().strftime('%b. %d, %Y at %I:%M %p')
+        deferred = store.create_product(product)
 
-        status = {
-            'name': product['name'],
-            'id': get_id(product_resp),
-            'url': get_url(product_resp),
-            'json': get_json(product_resp),
-            'modifiers': []
-        }
+        session['uploads'].append({
+            'created': time,
+            'active': True,
+            'thread': deferred.stash()
+        })
 
-        if product_resp is not None and product_resp.status_code == 200:
-            size_mod = store.create_size_modifier(status['id'], product)
-            clr_mod = store.create_color_modifier(status['id'], product)
-            mod_id = get_id(clr_mod['response'])
+    return render_template('results.html', data=json.dumps([]))
 
-            status['modifiers'].extend((get_json(size_mod), get_json(clr_mod['response'])))
 
-            for val, adj in zip(get_opts(clr_mod['response']), clr_mod['adjusters']):
-                mod_update = store.update_modifier(status['id'], mod_id, val['id'], adj)
 
-                status['modifiers'].append(get_json(mod_update))
+@app.route("/product-uploads", methods=['GET'])
+def product_uploads():
+    for upload in session['uploads']:
+        if upload['active']:
+            result = get_result(upload)
 
-        results.append(status)
+            if result:
+                upload['active'] = False
+                upload['result'] = result
 
-    return render_template('results.html', data=json.dumps(results))
+    return json.dumps(session['uploads'])
+
+
+
+@app.route("/active-uploads", methods=['GET'])
+def active_uploads():
+    active = []
+
+    for upload in session['uploads']:
+        if upload['active']:
+            result = get_result(upload)
+
+            if result:
+                upload['active'] = False
+                upload['result'] = result
+            else:
+                active.append(upload)
+
+    return json.dumps({'active': len(active)})
 
 
 

@@ -20,7 +20,8 @@ $(document).ready(() => {
         })
         .then(displays => {
             products = displays
-            displays[0].display.show()
+
+            products[0].display.show()
 
             $('#counter').text(`${active+1}/${products.length}`)
 
