@@ -54,6 +54,8 @@ $(document).ready(() => {
         .catch(error => {
             $('#error-wrapper').show()
             $('#error-status').html(error)
+
+            console['error'](error)
         })
 
 

@@ -12,9 +12,9 @@ class ProductDisplay {
         var d = $( $("#product-template").html() )
 
         $('#product-display').append(d)
-        d.hide()
 
-        d.attr('id', sku)
+        d.attr('id', `x${sku}`)
+        d.hide()
 
         this._display = d
     }
@@ -58,8 +58,8 @@ class ProductDisplay {
                     <input class="form-control text-center" name="${size}" type="text" value=${price}>
                 </div>`
             )
-    
-            return { size, price: this.display.find(`.sizes.form-row input[name='${size}']`) }
+
+            return {size, price: this.display.find(`.sizes.form-row input[name='${size}']`)}
         })
     }
 
@@ -70,11 +70,11 @@ class ProductDisplay {
 
     set description(d) {
         var editor = this.display.find('.product-description')
-            
+
         editor.html(d)
 
         this._description = (
-            new Quill(`#${this.sku} .product-description`, {
+            new Quill(`#x${this.sku} .product-description`, {
                 modules: {
                     toolbar: [
                         ['bold', 'italic', 'underline'],

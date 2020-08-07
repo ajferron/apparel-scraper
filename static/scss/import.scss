@@ -37,10 +37,6 @@
 
         .row.top {
             border-bottom: 1px solid #ececec;
-
-            header {
-                font-size: 18px;
-            }
         }
 
         .row.mid#product-display {
@@ -161,6 +157,7 @@
             }
         }
     }
+
     .ql-toolbar.ql-snow {
         border: 1px solid #ced4da;
         border-radius: 5px 5px 0 0;
@@ -196,13 +193,6 @@
                 }
             }
         }
-    }
-}
-
-
-.modal {
-    button.close:focus {
-        outline: none;
     }
 }
 

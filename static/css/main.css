@@ -29,6 +29,21 @@ body .custom-select:focus {
   box-shadow: 0 0 0 0.2rem #49505725;
 }
 
+.row.top header {
+  font-size: 18px;
+}
+.row.top header a img {
+  opacity: 1;
+  transition: 0.3s ease-in-out;
+}
+.row.top header a:hover img {
+  opacity: 0.65;
+}
+
+.modal button.close:focus {
+  outline: none;
+}
+
 ::-webkit-scrollbar {
   width: 25px;
 }

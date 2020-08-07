@@ -25,9 +25,9 @@ class SanmarSpider(scrapy.Spider):
             callback = self.after_login,
             formdata = {
                 'w3exec': 'login',
-                'customerNo': self.login['id'],
+                'customerNo': self.login['user_id'],
                 'email': self.login['email'],
-                'password': self.login['pass'],
+                'password': self.login['password'],
                 'send': ''
             }
         )]

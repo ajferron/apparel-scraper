@@ -1,0 +1,15 @@
+#user-settings .col-6 {
+  min-width: 600px;
+  max-width: 750px;
+}
+#user-settings .col-6 .row.mid nav .nav-item {
+  flex-grow: 1;
+  text-align: center;
+  color: #5a6268;
+}
+#user-settings .col-6 .row.mid nav .nav-item.active {
+  font-weight: 900;
+}
+#user-settings .col-6 .row.mid .tab-pane button {
+  display: none;
+}

@@ -33,9 +33,6 @@
 #import-review .col-8 .row.top {
   border-bottom: 1px solid #ececec;
 }
-#import-review .col-8 .row.top header {
-  font-size: 18px;
-}
 #import-review .col-8 .row.mid#product-display {
   overflow-y: auto;
   overflow-x: hidden;
@@ -157,10 +154,6 @@
 }
 #import-review .ql-container.ql-snow .ql-editor ul li {
   padding-left: 1em !important;
-}
-
-.modal button.close:focus {
-  outline: none;
 }
 
 @keyframes spin {

@@ -14,6 +14,13 @@ class BigCommerceStore():
         self.client_secret = client_secret
         self.client_id = client_id
 
+        self.headers = {
+            'content-type': 'application/json',
+            'accept': 'application/json',
+            'x-auth-client': self.client_id,
+            'x-auth-token': self.access_token
+        }
+
 
     @crochet.run_in_reactor
     def create_product(self, data):

@@ -34,6 +34,33 @@ body {
 }
 
 
+.row.top {
+    header {
+        font-size: 18px;
+
+        a {
+            img {
+                opacity: 1;
+                transition: 0.3s ease-in-out;
+            }
+
+            &:hover {
+                img {
+                    opacity: 0.65;
+                }
+            }
+        }
+    }
+}
+
+
+.modal {
+    button.close:focus {
+        outline: none;
+    }
+}
+
+
 ::-webkit-scrollbar {
     width: 25px;
 }

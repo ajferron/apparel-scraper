@@ -7,20 +7,14 @@ class ProductUpload():
         self.product = product
         self.store = store
 
-        self.headers = {
-            'content-type': 'application/json',
-            'accept': 'application/json',
-            'x-auth-client': self.store.client_id,
-            'x-auth-token': self.store.access_token
-        }
+        self.headers = self.store.headers
 
 
     def _request(self, method, url, data):
         r = requests.request(method, url, headers=self.headers, data=data)
 
         return { # Might want to create a Response class
-            'status_code': r.status_code if r else 0,
-            'error': r.json().get('error', ''),
+            'status_code': r.status_code,
             'url': r.json().get('data', {}).get('custom_url', {}).get('url', ''),
             'values': r.json().get('data', {}).get('option_values', []),
             'id': r.json().get('data', {}).get('id', '')

@@ -2,17 +2,7 @@
   min-width: 500px;
   max-width: 750px;
 }
-#import-form .col-7 .row.top header {
-  font-size: 18px;
-}
-#import-form .col-7 .row.top header a img {
-  opacity: 0.65;
-  transition: 0.3s ease-in-out;
-}
-#import-form .col-7 .row.top header a:hover img {
-  opacity: 1;
-}
-#import-form .col-7 .row.top header a #badge {
+#import-form .col-7 .row.top #badge {
   display: none;
   position: absolute;
   background: #dc3545;

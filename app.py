@@ -34,6 +34,7 @@ app.config['APP_CLIENT_ID'] = os.getenv('APP_CLIENT_ID')
 app.config['APP_CLIENT_SECRET'] = os.getenv('APP_CLIENT_SECRET')
 app.config['SESSION_SECRET'] = os.getenv('SESSION_SECRET')
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
+
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -64,7 +65,7 @@ logger.success('app initialized')
 class StoreOwner(db.Model):
     __tablename__ = 'users'
 
-    id = db.Column(db.Integer, primary_key=True)
+    owner_id = db.Column(db.Integer, primary_key=True)
     store_hash = db.Column(db.String(24), unique=True)
     access_token = db.Column(db.String(64), unique=True)
     scope = db.Column(db.String(), unique=False)
@@ -72,12 +73,30 @@ class StoreOwner(db.Model):
     email = db.Column(db.String(), unique=True)
 
     def __init__(self, data):
+        self.owner_id = data['user'].get('id')
         self.access_token = data['access_token']
         self.store_hash = data['context'].split('/')[1]
         self.username = data['user'].get('username')
         self.email = data['user'].get('email')
-        self.id = data['user'].get('id')
         self.scope = data['scope']
+
+
+
+class ImportSettings(db.Model):
+    __tablename__ = 'import_settings'
+
+    owner_id = db.Column(db.Integer, primary_key=True)
+    sanmar_config = db.Column(db.String(), unique=False)
+    debco_config = db.Column(db.String(), unique=False)
+    technosport_config = db.Column(db.String(), unique=False)
+    trimark_config = db.Column(db.String(), unique=False)
+
+    def __init__(self, owner_id, **kwargs):
+        self.owner_id = owner_id
+        self.sanmar_config = kwargs.get('sanmar', '{}')
+        self.debco_config = kwargs.get('debco', '{}')
+        self.technosport_config = kwargs.get('technosport', '{}')
+        self.trimark_config = kwargs.get('trimark', '{}')
 
 
 
@@ -87,7 +106,7 @@ def reset_session_timeout():
 
 
 
-@app.route('/')
+@app.route('/', methods=['GET'])
 def index():
     payload = request.args.get('signed_payload', False)
 
@@ -103,6 +122,9 @@ def index():
             logger.error('Failed to verify signature')
 
         session.permanent = True
+
+    if 'uploads' not in session:
+        session['uploads'] = []
 
     return render_template('index.html')
 
@@ -120,7 +142,7 @@ def auth():
 
 
 
-@app.route('/uninstall/')
+@app.route('/uninstall/', methods=['GET'])
 def uninstall():
     payload = request.args.get('signed_payload', '')
     bc_data = verify_sig(payload, client_secret()) if payload else {}
@@ -167,12 +189,15 @@ def authorize():
 
     user_id = int(response['user'].get('id'))
     owner = StoreOwner.query.get(user_id)
+    config = ImportSettings.query.get(user_id)
 
     if owner is not None:
         logger.info('Deleting outdated credentials from DB')
         db.session.delete(owner)
+        db.session.delete(config)
 
     db.session.add(StoreOwner(response))
+    db.session.add(ImportSettings(user_id))
     db.session.commit()
 
     logger.success('Store owner committed to DB')
@@ -181,7 +206,7 @@ def authorize():
 
 
 
-@app.route("/icons/<file_name>.svg")
+@app.route('/icons/<file_name>.svg', methods=['GET'])
 def get_icon(file_name):
     response = make_response(render_template(f'icons/{file_name}.svg'))
     response.mimetype = 'image/svg+xml'
@@ -190,7 +215,7 @@ def get_icon(file_name):
 
 
 
-@app.route("/scrape")
+@app.route('/scrape', methods=['GET'])
 def init_scrape():
     logger.info('Scraping product data')
 
@@ -212,30 +237,42 @@ def get_categories():
         with open('demo-categories.json') as categories:
             return json.loads(categories.read())
 
-    bc_data = session['bc_data']
-    user_id = bc_data['user'].get('id')
+    user_id = session['bc_data'].get('user').get('id')
     store_owner = StoreOwner.query.get(int(user_id))
 
     store = BigCommerceStore(store_owner, client_id(), client_secret())
 
-    data = store.get_categories()
-
-    return data.json()
+    return store.get_categories().json()
 
 
 
 @app.route('/import-review', methods=['POST'])
 def import_review():
+    owner_id = session['bc_data'].get('owner').get('id')
+    settings = ImportSettings.query.get(owner_id)
+    supplier = request.form['supplier']
+
+    if supplier == 'sanmar':
+        login_details = settings.sanmar_config
+
+    elif supplier == 'debco':
+        login_details = settings.debco_config
+
+    elif supplier == 'technosport':
+        login_details = settings.technosport_config
+
+    elif supplier == 'trimark':
+        login_details = settings.trimark_config
+
+    else:
+        return render_template('error.html', msg='Could not import from the given URL')
+
     session['scrape'] = {
         'url': request.form['url'],
         'supplier': request.form['supplier'],
         'import_type': request.form['import-type'],
-        'items': [],
-        'login': {
-            # 'id': request.form['id'],
-            # 'email': request.form['email'],
-            # 'pass': request.form['password'],
-        }
+        'login': json.loads(login_details),
+        'items': []
     }
 
     return render_template('import.html')
@@ -256,50 +293,105 @@ def import_products():
         logger.error('Import Failed: could not find store owner')
         return render_template('results.html', message='Could not find your store!')
 
-    if 'uploads' not in session:
-        session['uploads'] = []
+    batch = [] # Change this to dict
 
     for product in products:
         time = datetime.now().strftime('%b. %d, %Y at %I:%M %p')
         deferred = store.create_product(product)
 
-        session['uploads'].append({
+        batch.append({
             'created': time,
-            'active': True,
-            'thread': deferred.stash()
+            'product': product,
+            'thread': deferred.stash(),
+            'active': True
         })
+
+    session['uploads'].append(batch)
 
     return render_template('results.html', data=json.dumps([]))
 
 
 
-@app.route("/product-uploads", methods=['GET'])
-def product_uploads():
-    for upload in session['uploads']:
-        if upload['active']:
-            result = get_result(upload)
+@app.route('/user-settings', methods=['GET'])
+def user_settings():
+    owner_id = session['bc_data'].get('owner').get('id')
+    settings = ImportSettings.query.get(owner_id)
 
-            if result:
-                upload['active'] = False
-                upload['result'] = result
+    return render_template('settings.html',
+        sanmar=json.loads(settings.sanmar_config),
+        debco=json.loads(settings.debco_config),
+        technosport=json.loads(settings.technosport_config),
+        trimark=json.loads(settings.trimark_config)
+    )
+
+
+
+@app.route('/user-settings', methods=['POST'])
+def update_user_settings():
+    supplier = request.form.get('supplier', '')
+    owner_id = session['bc_data'].get('owner').get('id')
+    settings = ImportSettings.query.get(owner_id)
+
+    if settings:
+        config = {
+            'user_id': request.form.get('id', ''),
+            'email': request.form.get('email', ''),
+            'password': request.form.get('password', ''),
+            'markup': request.form.get('markup', '')
+        }
+
+        if supplier == 'sanmar':
+            settings.sanmar_config = json.dumps(config)
+
+        elif supplier == 'debco':
+            settings.debco_config = json.dumps(config)
+
+        elif supplier == 'technosport':
+            settings.technosport_config = json.dumps(config)
+
+        elif supplier == 'trimark':
+            settings.trimark_config = json.dumps(config)
+
+        db.session.commit()
+
+    return render_template('settings.html',
+        sanmar=json.loads(settings.sanmar_config),
+        debco=json.loads(settings.debco_config),
+        technosport=json.loads(settings.technosport_config),
+        trimark=json.loads(settings.trimark_config)
+    )
+
+
+
+@app.route('/product-uploads', methods=['GET'])
+def product_uploads():
+    for batch in session.get('uploads', []):
+        for upload in batch:
+            if upload['active']:
+                result = get_result(upload)
+
+                if result:
+                    upload['active'] = False
+                    upload['result'] = result
 
     return json.dumps(session['uploads'])
 
 
 
-@app.route("/active-uploads", methods=['GET'])
+@app.route('/active-uploads', methods=['GET'])
 def active_uploads():
     active = []
 
-    for upload in session['uploads']:
-        if upload['active']:
-            result = get_result(upload)
+    for batch in session.get('uploads', []):
+        for upload in batch:
+            if upload['active']:
+                result = get_result(upload)
 
-            if result:
-                upload['active'] = False
-                upload['result'] = result
-            else:
-                active.append(upload)
+                if result:
+                    upload['active'] = False
+                    upload['result'] = result
+                else:
+                    active.append(upload)
 
     return json.dumps({'active': len(active)})
 
