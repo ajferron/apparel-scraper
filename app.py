@@ -51,6 +51,11 @@ def session_secret():
     return app.config['SESSION_SECRET']
 
 
+def redirect_uri():
+    return 'http://127.0.0.1:3000/auth' if app.debug else 'https://apparel-scraper.herokuapp.com/auth'
+
+
+
 app.secret_key = session_secret()
 
 app.debug = os.getenv('DEBUG')
@@ -58,7 +63,7 @@ app.debug = os.getenv('DEBUG')
 logger = Logger(app.debug)
 db = SQLAlchemy(app)
 
-logger.success('app initialized')
+logger.success('App Initialized')
 
 
 
@@ -110,9 +115,6 @@ def reset_session_timeout():
 def index():
     payload = request.args.get('signed_payload', False)
 
-    # if not verify_sig(payload, client_secret()):
-        # return render_template('nope.html')
-
     if not session.get('bc_data', False):
         session['bc_data'] = verify_sig(payload, client_secret())
 
@@ -120,6 +122,11 @@ def index():
             logger.success('Verified signature')
         else:
             logger.error('Failed to verify signature')
+
+            if (not app.debug):
+                return render_template('error.html', msg='This web app can only be accessed through your Big Commerce store!')
+
+        logger.info('Updated bc_data')
 
         session.permanent = True
 
@@ -142,7 +149,7 @@ def auth():
 
 
 
-@app.route('/uninstall/', methods=['GET'])
+@app.route('/uninstall')
 def uninstall():
     payload = request.args.get('signed_payload', '')
     bc_data = verify_sig(payload, client_secret()) if payload else {}
@@ -161,31 +168,26 @@ def uninstall():
 
 @app.route('/authorize', methods=['POST'])
 def authorize():
-    url = 'https://login.bigcommerce.com/oauth2/token'
-    headers = {'content-type': 'application/x-www-form-urlencoded'}
-
-    redirect = {
-        'prod': 'https://apparel-scraper.herokuapp.com/auth',
-        'dev': 'http://127.0.0.1:5000/auth'
-    }
-
-    data = {
-        'client_id': client_id(),
-        'client_secret': client_secret(),
-        'grant_type': 'authorization_code',
-        'code': session['temp_auth'].get('code', ''),
-        'scope': session['temp_auth'].get('scope', ''),
-        'context': session['temp_auth'].get('context', ''),
-        'redirect_uri': redirect['dev'] if app.debug else redirect['prod']
-    }
+    response = requests.post(
+        url='https://login.bigcommerce.com/oauth2/token', 
+        headers={'content-type': 'application/x-www-form-urlencoded'},
+        data={
+            'client_id': client_id(),
+            'client_secret': client_secret(),
+            'grant_type': 'authorization_code',
+            'code': session['temp_auth'].get('code', ''),
+            'scope': session['temp_auth'].get('scope', ''),
+            'context': session['temp_auth'].get('context', ''),
+            'redirect_uri': redirect_uri()
+        }
+    ).json()
 
     session.pop('temp_auth', None)
 
-    response = requests.post(url, headers=headers, data=data).json()
-
     if 'error' in response:
         logger.error(f"Failed to authorize app\nResponse {response['error']}")
-        return render_template('error.html', message=response['error'])
+
+        return render_template('error.html', msg=response['error'])
 
     user_id = int(response['user'].get('id'))
     owner = StoreOwner.query.get(user_id)
@@ -398,4 +400,4 @@ def active_uploads():
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(port=3000)

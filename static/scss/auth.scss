@@ -1,11 +1,9 @@
 #auth-form {
-    .col-3 {
-        min-width: 400px;
+    .col-4 {
+        min-width: 450px;
 
-        form {
-            .icon-wrapper {
-                max-width: 30px;
-            }
+        .icon-wrapper {
+            max-width: 30px;
         }
     }
 }

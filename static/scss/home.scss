@@ -4,21 +4,35 @@
         max-width: 750px;
 
         .row.top {
-            #badge {
-                display: none;
-                position: absolute;
-                background: #dc3545;
-                border: 2.5px solid white;
-                border-radius: 50%;
-                color: white;
-                font-size: 9px;
-                text-align: center;
-                width: 17.5px;
-                height: 17.5px;
-                top: -4px;
-                left: -9px;
+            header {
+                font-size: 18px;
 
-                transition: 0.3s ease-in-out;
+                a {
+                    img {
+                        transition: 0.3s ease-in-out;
+                    }
+
+                    &:hover img {
+                        opacity: 0.65;
+                    }
+
+                    #badge {
+                        display: none;
+                        position: absolute;
+                        background: #dc3545;
+                        border: 2.5px solid white;
+                        border-radius: 50%;
+                        color: white;
+                        font-size: 9px;
+                        text-align: center;
+                        width: 17.5px;
+                        height: 17.5px;
+                        top: -4px;
+                        left: -9px;
+
+                        transition: 0.3s ease-in-out;
+                    }
+                }
             }
         }
 

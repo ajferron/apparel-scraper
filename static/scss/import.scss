@@ -40,10 +40,12 @@
         }
 
         .row.mid#product-display {
+            padding-right: 3px;
             overflow-y: auto;
             overflow-x: hidden;
+            scrollbar-width: none; // Firefox
 
-            &::-webkit-scrollbar {
+            &::-webkit-scrollbar { // Chrome, Edge, Safari, iOS
                 display: none;
             }
 
