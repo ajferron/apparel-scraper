@@ -37,8 +37,10 @@
   font-size: 18px;
 }
 #import-review .col-8 .row.mid#product-display {
+  padding-right: 3px;
   overflow-y: auto;
   overflow-x: hidden;
+  scrollbar-width: none;
 }
 #import-review .col-8 .row.mid#product-display::-webkit-scrollbar {
   display: none;

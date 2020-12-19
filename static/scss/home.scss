@@ -9,14 +9,11 @@
 
                 a {
                     img {
-                        opacity: 0.65;
                         transition: 0.3s ease-in-out;
                     }
 
-                    &:hover {
-                        img {
-                            opacity: 1;
-                        }
+                    &:hover img {
+                        opacity: 0.65;
                     }
 
                     #badge {
