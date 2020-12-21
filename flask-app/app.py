@@ -1,5 +1,5 @@
 from flask import Flask, request, session, render_template, make_response
-from utils import BigCommerceStore, Logger, verify_sig, run_spider, get_result
+from utils import Logger, verify_sig
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
 import dotenv
@@ -14,7 +14,6 @@ import os
 #   Add spiders for Trimark, Debco, TechnoSport
 #   Figure out how to communicate with spiders
 #   Make sure you can't access cookies from client
-#   Set up error screen
 #   Look into obfuscator
 
 
@@ -27,8 +26,9 @@ import os
 
 app = Flask(__name__)
 
+
 if os.path.exists('.env'):
-    dotenv.load_dotenv('.env')
+    dotenv.load_dotenv()
 
 app.config['APP_CLIENT_ID'] = os.getenv('APP_CLIENT_ID')
 app.config['APP_CLIENT_SECRET'] = os.getenv('APP_CLIENT_SECRET')
@@ -37,6 +37,11 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+app.config['DEBUG'] = lambda : os.getenv('DEBUG') != '0'
+app.config['DEMO'] = lambda : os.getenv('DEMO') != '0'
+app.config['LOG'] = lambda : os.getenv('LOG') != '0'
+
 
 
 def client_id():
@@ -47,21 +52,17 @@ def client_secret():
     return app.config['APP_CLIENT_SECRET']
 
 
-def session_secret():
-    return app.config['SESSION_SECRET']
-
-
 def redirect_uri():
-    return 'http://127.0.0.1:3000/auth' if app.debug else 'https://apparel-scraper.herokuapp.com/auth'
+    return 'http://127.0.0.1:3000/auth' if app.config['DEBUG']() else 'https://apparel-scraper-app.herokuapp.com/auth'
 
 
 
-app.secret_key = session_secret()
+app.secret_key = app.config['SESSION_SECRET']
 
-app.debug = os.getenv('DEBUG')
+logger = Logger(app.config['LOG']())
 
-logger = Logger(app.debug)
 db = SQLAlchemy(app)
+
 
 logger.success('App Initialized')
 
@@ -168,6 +169,9 @@ def uninstall():
 
 @app.route('/authorize', methods=['POST'])
 def authorize():
+    if not 'temp_auth' in session:
+        return render_template('error.html', msg=f'Please authorize from Big Commerce', btn='OK', uri='/')
+
     response = requests.post(
         url='https://login.bigcommerce.com/oauth2/token', 
         headers={'content-type': 'application/x-www-form-urlencoded'},
@@ -217,57 +221,47 @@ def get_icon(file_name):
 
 
 
-@app.route('/scrape', methods=['GET'])
-def init_scrape():
-    logger.info('Scraping product data')
-
-    if app.debug:
-        with open('demo-product.json') as product:
-            return product.read()
-
-    run_spider(session['scrape'])
-
-    return {'items': session['scrape'].get('items')}
-
-
-
 @app.route("/categories", methods=['GET'])
 def get_categories():
     logger.info('Getting product categories from store')
 
-    if app.debug:
-        with open('demo-categories.json') as categories:
+    # requests.get() categories from Big Commerce API
+
+    if app.config['DEMO']():
+        with open('demo/demo-categories.json') as categories:
             return json.loads(categories.read())
 
-    user_id = session['bc_data'].get('user').get('id')
-    store_owner = StoreOwner.query.get(int(user_id))
-
-    store = BigCommerceStore(store_owner, client_id(), client_secret())
-
-    return store.get_categories().json()
+    return '{data: []}'
 
 
 
 @app.route('/import-review', methods=['POST'])
 def import_review():
-    owner_id = session['bc_data'].get('owner').get('id')
-    settings = ImportSettings.query.get(owner_id)
-    supplier = request.form['supplier']
-
-    if supplier == 'sanmar':
-        login_details = settings.sanmar_config
-
-    elif supplier == 'debco':
-        login_details = settings.debco_config
-
-    elif supplier == 'technosport':
-        login_details = settings.technosport_config
-
-    elif supplier == 'trimark':
-        login_details = settings.trimark_config
+    if app.config['DEMO']():
+        login_details = '{}'
 
     else:
-        return render_template('error.html', msg='Could not import from the given URL')
+        owner_id = session['bc_data'].get('owner').get('id')
+        settings = ImportSettings.query.get(owner_id)
+        supplier = request.form['supplier']
+
+        if supplier == 'sanmar':
+            login_details = settings.sanmar_config
+
+        elif supplier == 'debco':
+            login_details = settings.debco_config
+
+        elif supplier == 'technosport':
+            login_details = settings.technosport_config
+
+        elif supplier == 'trimark':
+            login_details = settings.trimark_config
+
+        else:
+            return render_template('error.html', msg='Could not import from the given URL')
+
+        if login_details == '{}':
+            return render_template('error.html', msg=f'Please add login credentials for {supplier}', btn='Add', uri='/user-settings')
 
     session['scrape'] = {
         'url': request.form['url'],
@@ -281,34 +275,54 @@ def import_review():
 
 
 
+@app.route('/scrape', methods=['GET'])
+def init_scrape():
+    logger.info('Scraping product data')
+
+    if app.config['DEMO']():
+        with open('demo/demo-product.json') as product:
+            return product.read()
+
+    # requests.post() to Scrapy cluster REST API /feed endpoint
+    # run_spider(session['scrape'])
+
+    return {'items': session['scrape'].get('items')}
+
+
+
 @app.route("/import", methods=['POST'])
 def import_products():
-    bc_data = session['bc_data']
-    user_id = bc_data['user'].get('id')
-    owner = StoreOwner.query.get(int(user_id))
-    products = json.loads(request.form['products'])
+    if app.config['DEMO']():
+        pass
 
-    if owner is not None:
-        store = BigCommerceStore(owner, client_id(), client_secret())
-        logger.success('Set up user store')
     else:
-        logger.error('Import Failed: could not find store owner')
-        return render_template('results.html', message='Could not find your store!')
+        bc_data = session['bc_data']
+        user_id = bc_data['user'].get('id')
 
-    batch = [] # Change this to dict
+        products = json.loads(request.form['products'])
 
-    for product in products:
-        time = datetime.now().strftime('%b. %d, %Y at %I:%M %p')
-        deferred = store.create_product(product)
+        # owner = StoreOwner.query.get(int(user_id))
 
-        batch.append({
-            'created': time,
-            'product': product,
-            'thread': deferred.stash(),
-            'active': True
-        })
+        # if owner is not None:
+        #     store = BigCommerceStore(owner, client_id(), client_secret())
+        #     logger.success('Set up user store')
+        # else:
+        #     return render_template('results.html', message='Could not find your store!')
 
-    session['uploads'].append(batch)
+        # batch = [] # Change this to dict
+
+        # for product in products:
+        #     time = datetime.now().strftime('%b. %d, %Y at %I:%M %p')
+        #     deferred = store.create_product(product)
+
+        #     batch.append({
+        #         'created': time,
+        #         'product': product,
+        #         'thread': deferred.stash(),
+        #         'active': True
+        #     })
+
+        # session['uploads'].append(batch)
 
     return render_template('results.html', data=json.dumps([]))
 
@@ -316,6 +330,14 @@ def import_products():
 
 @app.route('/user-settings', methods=['GET'])
 def user_settings():
+    if app.config['DEMO']():
+        return render_template('settings.html',
+            sanmar={"user_id": "12345", "email": "apparel@scraper.com", "password": "abcd12345", "markup": "15.00"},
+            debco={"email": "", "password": "", "markup": "15.00"},
+            technosport={"email": "apparel@scraper.com", "password": "abcd12345", "markup": "15.00"},
+            trimark={"email": "apparel@scraper.com", "password": "abcd12345", "markup": "15.00"}
+        )
+
     owner_id = session['bc_data'].get('owner').get('id')
     settings = ImportSettings.query.get(owner_id)
 
@@ -330,74 +352,74 @@ def user_settings():
 
 @app.route('/user-settings', methods=['POST'])
 def update_user_settings():
-    supplier = request.form.get('supplier', '')
-    owner_id = session['bc_data'].get('owner').get('id')
-    settings = ImportSettings.query.get(owner_id)
+    if app.config['DEMO']():
+        return render_template('settings.html',
+            sanmar={"user_id": "12345", "email": "apparel@scraper.com", "password": "abcd12345", "markup": "15.00"},
+            debco={"email": "", "password": "", "markup": "15.00"},
+            technosport={"email": "apparel@scraper.com", "password": "abcd12345", "markup": "15.00"},
+            trimark={"email": "apparel@scraper.com", "password": "abcd12345", "markup": "15.00"}
+        )
 
-    if settings:
-        config = {
-            'user_id': request.form.get('id', ''),
-            'email': request.form.get('email', ''),
-            'password': request.form.get('password', ''),
-            'markup': request.form.get('markup', '')
-        }
+    else:
+        supplier = request.form.get('supplier', '')
+        owner_id = session['bc_data'].get('owner').get('id')
+        settings = ImportSettings.query.get(owner_id)
 
-        if supplier == 'sanmar':
-            settings.sanmar_config = json.dumps(config)
+        if settings:
+            config = {
+                'user_id': request.form.get('id', ''),
+                'email': request.form.get('email', ''),
+                'password': request.form.get('password', ''),
+                'markup': request.form.get('markup', '')
+            }
 
-        elif supplier == 'debco':
-            settings.debco_config = json.dumps(config)
+            if supplier == 'sanmar':
+                settings.sanmar_config = json.dumps(config)
 
-        elif supplier == 'technosport':
-            settings.technosport_config = json.dumps(config)
+            elif supplier == 'debco':
+                settings.debco_config = json.dumps(config)
 
-        elif supplier == 'trimark':
-            settings.trimark_config = json.dumps(config)
+            elif supplier == 'technosport':
+                settings.technosport_config = json.dumps(config)
 
-        db.session.commit()
+            elif supplier == 'trimark':
+                settings.trimark_config = json.dumps(config)
 
-    return render_template('settings.html',
-        sanmar=json.loads(settings.sanmar_config),
-        debco=json.loads(settings.debco_config),
-        technosport=json.loads(settings.technosport_config),
-        trimark=json.loads(settings.trimark_config)
-    )
+            db.session.commit()
+
+        return render_template('settings.html',
+            sanmar=json.loads(settings.sanmar_config),
+            debco=json.loads(settings.debco_config),
+            technosport=json.loads(settings.technosport_config),
+            trimark=json.loads(settings.trimark_config)
+        )
 
 
 
 @app.route('/product-uploads', methods=['GET'])
 def product_uploads():
-    for batch in session.get('uploads', []):
-        for upload in batch:
-            if upload['active']:
-                result = get_result(upload)
-
-                if result:
-                    upload['active'] = False
-                    upload['result'] = result
+    # if session['uploads'] == []:
+        # query db for all uploads 
+        # store uploads in session
+    
+    # return array of {upload_id: xxx, status: ---}
 
     return json.dumps(session['uploads'])
 
 
 
-@app.route('/active-uploads', methods=['GET'])
+@app.route('/upload-status', methods=['GET'])
 def active_uploads():
-    active = []
+    # req contains list of upload_ids
+    # session['bc_data'] contains owner_id
+    # query db for all the upload_ids with the owner_id
+    # respond with array of {upload_id: xxx, status: ---}
 
-    for batch in session.get('uploads', []):
-        for upload in batch:
-            if upload['active']:
-                result = get_result(upload)
-
-                if result:
-                    upload['active'] = False
-                    upload['result'] = result
-                else:
-                    active.append(upload)
-
-    return json.dumps({'active': len(active)})
-
+    return '{}'
+ 
 
 
 if __name__ == '__main__':
-    app.run(port=3000)
+    port = int(os.getenv('PORT', 5000))
+
+    app.run(host='0.0.0.0', port=port)

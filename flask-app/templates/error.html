@@ -20,13 +20,15 @@
 
 <body>
     <div id="error-wrapper" class="center">
-        <form action="/" method="GET">
+        <form action="{% if uri %}{{uri}}{% else %}/{% endif %}" method="GET">
             <div class="d-flex flex-column align-items-center">
                 <img src="icons/error.svg" alt="">
 
                 <span id="error-status" class="my-4"> {{msg}} </span>
 
-                <button type="buttton" class="btn btn-outline-secondary"> Retry </button>
+                <button type="submit" class="btn btn-outline-secondary"> 
+                    {% if btn %} {{btn}} {% else %} Retry {% endif %} 
+                </button>
             </div>
         </form>
     </div>
