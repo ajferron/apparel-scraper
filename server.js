@@ -1,11 +1,15 @@
 const express = require('express');
 const puppeteer = require('puppeteer');
 const bodyParser = require('body-parser');
+const {v4: uuid} = require('uuid');
+
 const scraper = require('./scraper');
-const {v4: uuid} = require('uuid')
+const {expressLogger} = require('./logger');
+
 
 const app = express();
 
+app.use(expressLogger());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 
