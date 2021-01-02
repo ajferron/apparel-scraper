@@ -1,83 +1,76 @@
-const express = require('express')
-const app = express()
-const lib = require('./lib')
+const express = require('express');
 const puppeteer = require('puppeteer');
-const Promise = require('bluebird');
-const fs = require('fs');
-const proxyChain = require('proxy-chain');
+const bodyParser = require('body-parser');
+const scraper = require('./scraper');
+const {v4: uuid} = require('uuid')
 
-const bodyParser = require('body-parser')
+const app = express();
+
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({
-  extended: true
-}));
+app.use(bodyParser.urlencoded({extended: true}));
 
 var browser;
 
 (async () => {
-
-  var executablePath = process.env.EXECUTABLE_PATH;
-
-  if (!executablePath) {
-    try {
-      fs.accessSync('/usr/bin/chromium-browser');
-      executablePath = '/usr/bin/chromium-browser';
-    } catch (e) {
-    }
-  }
-
-  var headless = true;
-
-  if (process.env.HEADLESS === 'false') {
-    headless = false;
-  }
-
-  var args = [
-    '--disable-dev-shm-usage',
-    // eventually should be removed
-    '--no-sandbox',
-    '--disable-setuid-sandbox'
-  ];
-
-  //--disk-cache-size=0
-
-  if (process.env.PROXY_URL) {
-    const newProxyUrl = await proxyChain.anonymizeProxy(process.env.PROXY_URL);
-    args.push(`--proxy-server=${newProxyUrl}`);
-  }
-
-  var options = {
-    headless: headless,
-    slowMo: process.env.SLOW_MO || 250,
-    executablePath: executablePath,
-    args: args
-  }
-
-  if (process.env.USER_DATA_DIR) {
-    options.userDataDir = process.env.USER_DATA_DIR;
-  }
-
-  browser = await puppeteer.launch(options);
-
-  console.log('Browser loaded');
+    browser = await puppeteer.launch({
+        slowMo: process.env.SLOW_MO || 250,
+        headless: true,
+    });
 })();
 
-app.all('/', async (req, res) => {
 
-  var options = {
-    url: req.body.url || 'http://localhost:3050',
-    pageFunction: eval(`(${req.body.pageFunction})`),
-    delay: req.body.delay,
-    noCookies: req.body.noCookies,
-    userAgent: req.body.userAgent
-  }
+app.all('/', async(req, res) => {
+    var spec = {
+        feed: {
+            urls: `[string, string, ...] || ["http://localhost:${process.env.PORT}"]`,
+            extractor: 'function($) {...} || null',
+            viewport: 'object || {width: 0, height: 0}',
+            cookies: 'object || {}',
+            userAgent: 'string || "web-scraper"',
+            delay: 'number (ms)',
+            login: {
+                'form_url': 'string',
+                'submit_btn': 'string',
+                'fields': {
+                    '#username': 'string',
+                    '#password': 'string'
+                }
+            }
+        },
+        status: {
+            scrape_id: 'string'
+        }
+    };
 
-  var result = await lib(browser, options);
-  res.json(result);
-})
+    res.json(spec);
+});
 
-app.get('/status', async (req, res) => {
-  res.json({});
-})
+
+app.post('/feed', async(req, res) => {
+    try {
+        var options = {
+            urls: req.body.urls || [`http://localhost:${process.env.PORT}`],
+            extractor: eval(`(${req.body.extractor})`),
+            viewport: req.body.viewport || {width: 0, height: 0},
+            userAgent: req.body.userAgent || "web-scraper",
+            delay: req.body.delay || 250,
+            login: req.body.login || null,
+            scrapeid: req.body.scrapeid || uuid()
+        };
+
+        // Don't await scraper(...), add callback to update Redis & DB
+
+        res.json(await scraper(browser, options));
+
+    } catch(e) {
+        res.json({data: null, error: e});
+    }
+});
+
+
+app.get('/status', async(req, res) => {
+    res.json({});
+});
+
 
 module.exports = app;

@@ -1,38 +1,30 @@
 {
-  "name": "web-to-json",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js",
-    "test": "NODE_ENV=test mocha test/indexSpec.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/digestoo/web-to-json.git"
-  },
-  "author": "Mateusz Rzepa",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/digestoo/web-to-json/issues"
-  },
-  "homepage": "https://github.com/digestoo/web-to-json#readme",
-  "dependencies": {
-    "bluebird": "^3.5.1",
-    "body-parser": "^1.18.2",
-    "cheerio": "^1.0.0-rc.2",
-    "express": "^4.16.2",
-    "fs": "0.0.1-security",
-    "lodash": "^4.17.5",
-    "proxy-chain": "^0.2.3",
-    "puppeteer": "^1.3.0"
-  },
-  "devDependencies": {
-    "assert": "^1.4.1",
-    "cookie-parser": "^1.4.3",
-    "express-session": "^1.15.6",
-    "mocha": "^3.4.2",
-    "server": "^1.0.18",
-    "superagent": "^3.8.2"
-  }
+    "name": "web-scraper",
+    "author": "Alvin Ferron",
+    "license": "MIT",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "start": "node index.js",
+        "test": "node test.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/aj-ferr/web-scraper"
+    },
+    "homepage": "https://github.com/aj-ferr/web-scraper#readme",
+    "dependencies": {
+        "body-parser": "^1.18.2",
+        "cheerio": "^1.0.0-rc.2",
+        "express": "^4.16.2",
+        "express-winston": "^4.0.5",
+        "puppeteer": "^1.20.0",
+        "uuid": "^8.3.2",
+        "winston": "^3.3.3"
+    },
+    "devDependencies": {
+        "assert": "^1.4.1",
+        "fs": "0.0.1-security"
+    }
 }
