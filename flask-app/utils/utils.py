@@ -1,3 +1,4 @@
+import datetime as dt
 import hashlib
 import base64
 import hmac
@@ -14,20 +15,29 @@ class Logger:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
-    def __init__(self, debug):
-        self.debug = debug
+    def __init__(self, name, enabled):
+        self.name = name
+        self.enabled = enabled
+
+    @staticmethod
+    def _time():
+        return dt.datetime.now().strftime('%m/%d/%Y - %I:%M:%S %p')
+
 
     def info(self, s):
-        self.log(Logger.YELLOW, f'[-] {s}')
+        self._log(Logger.YELLOW, f'[-] {s}')
 
     def success(self, s):
-        self.log(Logger.GREEN, f'[+] {s}')
+        self._log(Logger.GREEN, f'[+] {s}')
 
     def error(self, s):
-        self.log(Logger.RED, f'[!] {s}')
+        self._log(Logger.RED, f'[!] {s}')
 
-    def log(self, c, s):
-        if self.debug: print(f"{c}{s}{Logger.ENDC}")
+
+    def _log(self, clr, s):
+        if self.enabled: 
+            print(f"[{Logger._time()}] - {self.name} - {clr}{s}{Logger.ENDC}")
+
 
 
 def verify_sig(signed_payload, client_secret):
