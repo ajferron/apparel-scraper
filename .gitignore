@@ -2,5 +2,7 @@
 
 .vscode/
 
+test-app/
+
 setup.txt
 credentials.txt

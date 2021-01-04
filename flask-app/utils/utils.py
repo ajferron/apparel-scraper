@@ -36,7 +36,7 @@ class Logger:
 
     def _log(self, clr, s):
         if self.enabled: 
-            print(f"[{Logger._time()}] - {self.name} - {clr}{s}{Logger.ENDC}")
+            print(f'[{Logger._time()}] - {self.name} - {clr}{s}{Logger.ENDC}', flush=True)
 
 
 
