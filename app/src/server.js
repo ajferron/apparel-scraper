@@ -51,7 +51,7 @@ var browser;
 app.all('/', async (req, res) => {
     var spec = {
         feed: {
-            urls: `[string, string, ...] || ["http://localhost:${process.env.PORT}"]`,
+            urls: `[{url:'', id:''}, ...] || ["http://localhost:${process.env.PORT}"]`,
             extractor: 'function($) {...} || null',
             viewport: 'object || {width: 0, height: 0}',
             cookies: 'object || {}',
