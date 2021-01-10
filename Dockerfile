@@ -34,4 +34,4 @@ ENV PORT 5000
 EXPOSE 5000
 
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "index.js"]
+CMD ["node", "main.js"]

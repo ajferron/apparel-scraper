@@ -1,5 +1,5 @@
 const $ = require('cheerio');
-const {Logger} = require('./logger');
+const {Logger} = require('../lib/logger');
 
 
 const scraper = async (browser, options) => {

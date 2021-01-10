@@ -1,24 +1,23 @@
 const express = require('express');
-const redis = require("redis");
 const puppeteer = require('puppeteer');
 const bodyParser = require('body-parser');
+const {createClient} = require("redis");
 const {v4: uuid} = require('uuid');
 const fs = require('fs');
 
 const scraper = require('./scraper');
-const {ExpressLogger, Logger} = require('./logger');
-
+const pg = require('../lib/postgres');
+const {ExpressLogger, Logger} = require('../lib/logger');
 
 const app = express();
 const logger = Logger('Scrape API');
-const client = redis.createClient('redis://redis:6379');
-
-client.on('connect', () => logger.info('Connected to Redis'));
+const redis = createClient(process.env.REDIS_URI);
 
 app.use(ExpressLogger());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 
+redis.on('connect', () => logger.info('Connected to Redis'));
 
 var browser;
 
@@ -49,7 +48,7 @@ var browser;
 })();
 
 
-app.all('/', async(req, res) => {
+app.all('/', async (req, res) => {
     var spec = {
         feed: {
             urls: `[string, string, ...] || ["http://localhost:${process.env.PORT}"]`,
@@ -76,9 +75,9 @@ app.all('/', async(req, res) => {
 });
 
 
-app.post('/feed', async(req, res) => {
+app.post('/feed', async (req, res) => {
     try {
-        var meta = {
+        const meta = {
             job_id: req.body.job_id || uuid(),
             urls: req.body.urls || [],
             extractor: req.body.extractor || '$ => null',
@@ -88,22 +87,41 @@ app.post('/feed', async(req, res) => {
             login: req.body.login || null,
         };
 
+        const redis_cleaner = (err, res) => {
+            meta.urls.map(url => url.id || uuid()).forEach(id => {
+                redis.del(id, () => logger.info(`Redis: removed ${id}`));
+            });
+        }
+
         meta.urls.forEach(({id}) => {
-            client.set(id, '', () => logger.info(`Redis: set ${id}`));
+            redis.set(id, '', () => logger.info(`Redis: set ${id}`));
         });
 
-        scraper(browser, meta).then(output => {
-            logger.info(`Completed scrape job!\n${output}`)
-            
-            if (output.data)
-                meta.urls.map((url, i) => ({
-                    id: url.id || uuid(), 
-                    data: JSON.stringify(output.data[i])
+        scraper(browser, meta)
+            .then(result => {
+                logger.info(`Completed scrape job!\n${result}`)
 
-                })).forEach(({id, data}) => {
-                    client.set(id, data, () => logger.info(`Redis: updated ${id}`));
-                });
-        })
+                result.data?.forEach(async ({scrape_id, output}) => {
+                    // Check # of rows updated. If none, push to db
+
+                    await pg.update({
+                        table: 'product_uploads', 
+                        columns: {'result':JSON.stringify(output), 'status':'scraped'}, 
+                        filters: {'scrape_id':scrape_id}, 
+                        callback: redis_cleaner
+                    })
+                })
+            })
+            .catch(async () => {
+                logger.error(`Failed scrape job!`)
+
+                await pg.update({
+                    table: 'product_uploads', 
+                    columns: {'result':JSON.stringify({'error': 'Failed to upload'})}, 
+                    filters: {'job_id':meta.job_id}, 
+                    callback: redis_cleaner
+                })
+            })
 
         res.json({data: {meta}, error: null});
 
@@ -113,8 +131,8 @@ app.post('/feed', async(req, res) => {
 });
 
 
-app.get('/status', async(req, res) => {
-    await client.get(req.body.scrape_id || '', () => {
+app.get('/status', async (req, res) => {
+    await redis.get(req.body.scrape_id || '', () => {
         res.json({data: output, error: null});
     });
 });
