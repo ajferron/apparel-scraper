@@ -1,0 +1,55 @@
+#user-uploads .col-7 {
+  min-width: 500px;
+  max-width: 750px;
+}
+#user-uploads .col-7 #upload-list .card {
+  border: 1px solid #CED4DA;
+}
+#user-uploads .col-7 #upload-list .card:not(:last-of-type) {
+  border-bottom: none;
+}
+#user-uploads .col-7 #upload-list .card .card-header {
+  background-color: #F7F8FA;
+  cursor: pointer;
+}
+#user-uploads .col-7 #upload-list .card .card-header .job-title, #user-uploads .col-7 #upload-list .card .card-header .supplier {
+  font-size: 18px;
+}
+#user-uploads .col-7 #upload-list .card .card-header .job-id {
+  font-size: 14px;
+  color: #8D99A6;
+  font-weight: 300;
+}
+#user-uploads .col-7 #upload-list .card .card-header .job-size {
+  font-size: 16px;
+  color: #8D99A6;
+}
+#user-uploads .col-7 #upload-list .card .card-header .status-btn {
+  background-color: #E6E8EB;
+  border: none;
+  border-radius: 5px 2px 5px 5px;
+  font-weight: 500;
+  color: #495057;
+  height: min-content;
+  transition: all 0.25s ease-in-out;
+}
+#user-uploads .col-7 #upload-list .card .card-header .status-btn:hover {
+  background-color: #CED2D9;
+}
+#user-uploads .col-7 #upload-list .card .card-header .status-btn span img {
+  width: 15px;
+  height: 15px;
+}
+#user-uploads .col-7 #upload-list .card .card-header .status-btn span a {
+  color: inherit;
+  text-decoration: inherit;
+}
+#user-uploads .col-7 #upload-list .card .card-body .scrape-data .sku {
+  color: #8D99A6;
+  font-weight: 300;
+}
+#user-uploads .col-7 #upload-list .card .card-body .scrape-id {
+  color: #9DA8B2;
+  font-size: 14px;
+  font-weight: 300;
+}

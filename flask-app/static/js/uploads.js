@@ -1,9 +1,65 @@
-import Upload from './model/SubMenu.js'
+import ScrapeJob from './model/ScrapeJob.js'
 
 $(document).ready(() => {
-    fetch('/user-uploads', {method: 'GET', credentials: 'same-origin'})
-        .then(response => response.json())
-        .then(response => response.uploads.map(u => new Upload(u)))
-        .then(uploads => uploads.map(u => u.card.clone()))
-        .then(uploads => $('#upload-list').append(uploads))
-})
+    loadJobData()
+
+    $('#job-data').on('change', loadJobData)
+});
+
+
+$(document).on("click", '.card-header', function() {
+    $(this).next().collapse('toggle');
+});
+
+$(document).on("click", '.status-btn', function() {
+    e.stopPropagation()
+});
+
+
+function loadJobData() {
+    const json = (() => {
+        try {
+            return JSON.parse( $('#job-data').val() )
+        } catch(e) {
+            return {}
+        }
+    })()
+
+    if (json.length)
+        $('#placeholder').remove();
+
+    // Group scrapes that belong to the same job
+    // json => {job_id1: [scrape, ...], job_id2: [scrape, ...]} 
+    // scrape == {name, job_type, supplier, status, scrapes}
+
+    const scrape_jobs = json.reduce((jobs, s) => {
+        s.url = s.meta.urls.filter(url => url.id === s.scrape_id)[0]?.url
+
+        if (s.job_id in jobs)
+            jobs[s.job_id].scrapes.append(s);
+
+        else
+            jobs[s.job_id] = {
+                name: s.meta.name,
+                job_type: s.meta.job_type,
+                supplier: s.meta.supplier,
+                status: s.status,
+                scrapes: [s]
+            }
+
+        return jobs;
+    }, {})
+
+    console.log(scrape_jobs);
+
+    // Convert ScrapeJobs to a string of <div class="card">
+    for (const [job_id, meta] of Object.entries(scrape_jobs)) {
+        const {name, scrapes, job_type, supplier, status} = meta;
+
+        const job = $(
+            ScrapeJob(scrapes, {name, job_id, job_type, supplier, status})
+        );
+
+        $('#upload-list').append(job);
+    }
+}
