@@ -1,19 +1,19 @@
 class ProductDisplay {
-    constructor({name, sku, description, sizes, swatch}) {
-        this.display = sku
+    constructor({name, sku, desc, sizes, swatch}) {
+        this.display = {sku}
         this.name = name
         this.sku = sku
-        this.description = description
+        this.description = desc
         this.sizes = sizes
         this.swatch = swatch
     }
 
-    set display(sku) {
+    set display(config) {
         var d = $( $("#product-template").html() )
 
         $('#product-display').append(d)
 
-        d.attr('id', `x${sku}`)
+        d.attr('id', `x${config.sku}`)
         d.hide()
 
         this._display = d
@@ -49,27 +49,27 @@ class ProductDisplay {
 
 
     set sizes(sizes) {
-        this._sizes = Object.keys(sizes).map(size => {
-            var price = (Number(sizes[size]) + 15).toFixed(2)
+        this._sizes = sizes.map(({label, price}) => {
+            price = (Number(price || 0) + 15).toFixed(2)
 
-            this.display.find('.sizes.form-row').append(
-               `<div class="col d-flex flex-column align-items-center">
-                    <label class="mb-1" for="${size}"> ${size} </label>
-                    <input class="form-control text-center" name="${size}" type="text" value=${price}>
-                </div>`
-            )
+            this.display.find('.sizes.form-row').append(`
+               <div class="col d-flex flex-column align-items-center">
+                    <label class="mb-1" for="${label}"> ${label} </label>
+                    <input class="form-control text-center" name="${label}" type="text" value=${price}>
+                </div>
+            `)
 
-            return {size, price: this.display.find(`.sizes.form-row input[name='${size}']`)}
+            return {label, price: this.display.find(`.sizes.form-row input[name='${label}']`)}
         })
     }
 
     get sizes() {
-        return this._sizes.map(({price, size}) => ({size, price: price.val()}))
+        return this._sizes.map(({label, price}) => ({label, price: price.val()}))
     }
 
 
     set description(d) {
-        var editor = this.display.find('.product-description')
+        var editor = this.display.find('.product-description .ql-editor')
 
         editor.html(d)
 
@@ -95,7 +95,7 @@ class ProductDisplay {
     set swatch(s) {
         var carousel = this.display.find('.carousel')
 
-        Object.entries(s).forEach(([color, url], i) => {
+        s.forEach(({color, url}, i) => {
             let id = `swatch-carousel-${this.sku}`
 
             carousel.attr('id', id)
@@ -114,11 +114,11 @@ class ProductDisplay {
             )
 
             carousel.find('.carousel-indicators').append(
-                $(
-                   `<li class="${i == 1 ? 'active' : ''} mx-1" data-target="#${id}" data-slide-to=${i}>
+                $(`
+                    <li class="${i == 1 ? 'active' : ''} mx-1" data-target="#${id}" data-slide-to=${i}>
                         <img src="${url}" alt="${color}">
-                    </li>`
-                )
+                    </li>
+                `)
             )
         })
 
