@@ -1,5 +1,5 @@
-from flask import Flask, request, session, render_template, make_response
-from utils import Logger, verify_sig
+from flask import Flask, request, session, render_template, make_response, redirect
+from utils import Logger, verify_sig, ScrapeJob
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
 import dotenv
@@ -9,18 +9,14 @@ import os
 
 
 
-# PROJECT STATE (July 31, 2020)
+# PROJECT STATE (January 9, 2021)
 
 #   Add spiders for Trimark, Debco, TechnoSport
-#   Figure out how to communicate with spiders
-#   Make sure you can't access cookies from client
+#   Upgrade to Bootstrap 5
 #   Look into obfuscator
-
-
-# OTHER IMPROVEMENTS
-
-#   Have users create an account with the app
-#   Allow them to save login information for suppliers
+#   Create a table for jobs (not just scrapes), move meta
+#   Fix alignment with varying status values in uploads.html
+#   Clean up loggers, add logging to review.js, uploads.js
 
 
 
@@ -30,6 +26,7 @@ app = Flask(__name__)
 if os.path.exists('.env'):
     dotenv.load_dotenv()
 
+app.config['APP_URL'] = os.getenv('APP_URL', 'http://127.0.0.1:3000')
 app.config['APP_CLIENT_ID'] = os.getenv('APP_CLIENT_ID')
 app.config['APP_CLIENT_SECRET'] = os.getenv('APP_CLIENT_SECRET')
 app.config['SESSION_SECRET'] = os.getenv('SESSION_SECRET')
@@ -38,9 +35,12 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-app.config['DEBUG'] = lambda : os.getenv('DEBUG') != '0'
-app.config['DEMO'] = lambda : os.getenv('DEMO') != '0'
-app.config['LOG'] = lambda : os.getenv('LOG') != '0'
+app.config['SCRAPE_API'] = os.getenv('SCRAPE_API', 'http://apparel-scraper_scraper-api_1:5000')
+app.config['BC_API'] = os.getenv('BC_API', 'http://apparel-scraper_bc-api_1:8000')
+
+app.config['DEMO_ID'] = os.getenv('DEMO_ID')
+app.config['DEBUG'] = os.getenv('DEBUG') != '0'
+app.config['LOG'] = os.getenv('LOG') != '0'
 
 
 
@@ -52,14 +52,10 @@ def client_secret():
     return app.config['APP_CLIENT_SECRET']
 
 
-def redirect_uri():
-    return 'http://127.0.0.1:3000/auth' if app.config['DEBUG']() else 'https://apparel-scraper-app.herokuapp.com/auth'
-
-
 
 app.secret_key = app.config['SESSION_SECRET']
 
-logger = Logger(app.config['LOG']())
+logger = Logger('app', app.config['LOG'])
 
 db = SQLAlchemy(app)
 
@@ -79,12 +75,12 @@ class StoreOwner(db.Model):
     email = db.Column(db.String(), unique=True)
 
     def __init__(self, data):
-        self.owner_id = data['user'].get('id')
-        self.access_token = data['access_token']
-        self.store_hash = data['context'].split('/')[1]
-        self.username = data['user'].get('username')
-        self.email = data['user'].get('email')
-        self.scope = data['scope']
+        self.owner_id = data.get('user', {}).get('id', '')
+        self.access_token = data.get('access_token', '')
+        self.store_hash = data.get('context', '').split('/')[1]
+        self.username = data.get('user', {}).get('username', '')
+        self.email = data.get('user', {}).get('email', '')
+        self.scope = data.get('scope', '')
 
 
 
@@ -106,6 +102,26 @@ class ImportSettings(db.Model):
 
 
 
+class ProductUpload(db.Model):
+    __tablename__ = 'product_uploads'
+
+    scrape_id = db.Column(db.String(), primary_key=True)
+    owner_id = db.Column(db.Integer, unique=False)
+    job_id = db.Column(db.String(), unique=False)
+    meta = db.Column(db.String(), unique=False)
+    status = db.Column(db.String(), unique=False)
+    result = db.Column(db.String(), unique=False)
+
+    def __init__(self, data):
+        self.scrape_id = data.get('scrape_id', '')
+        self.job_id = data.get('job_id', '')
+        self.owner_id = data.get('owner_id', '')
+        self.status = data.get('status', '')
+        self.result = data.get('result', '')
+        self.meta = data.get('meta', '')
+
+
+
 @app.before_request
 def reset_session_timeout():
     session.modified = True
@@ -114,27 +130,28 @@ def reset_session_timeout():
 
 @app.route('/', methods=['GET'])
 def index():
-    payload = request.args.get('signed_payload', False)
+    if session.get('owner_id', 0):
+        return render_template('index.html')
 
-    if not session.get('bc_data', False):
-        session['bc_data'] = verify_sig(payload, client_secret())
+    else:
+        payload = request.args.get('signed_payload', False)
+        bc_data = verify_sig(payload, client_secret())
 
-        if payload and session['bc_data']:
+        if payload and bc_data:
+            session['owner_id'] = int(bc_data['owner']['id'])
+
+        if app.config['DEBUG']:
+            session['owner_id'] = int(app.config['DEMO_ID'])
+
+        if session.get('owner_id', 0):
             logger.success('Verified signature')
-        else:
-            logger.error('Failed to verify signature')
 
-            if (not app.debug):
-                return render_template('error.html', msg='This web app can only be accessed through your Big Commerce store!')
+            return render_template('index.html')
 
-        logger.info('Updated bc_data')
+    logger.error('Failed to verify signature')
 
-        session.permanent = True
+    return render_template('error.html', msg='This web app can only be accessed through your Big Commerce store!')
 
-    if 'uploads' not in session:
-        session['uploads'] = []
-
-    return render_template('index.html')
 
 
 
@@ -152,12 +169,12 @@ def auth():
 
 @app.route('/uninstall')
 def uninstall():
-    payload = request.args.get('signed_payload', '')
-    bc_data = verify_sig(payload, client_secret()) if payload else {}
+    payload = request.args.get('signed_payload', False)
+    bc_data = verify_sig(payload, client_secret())
 
     if bc_data:
-        user_id = bc_data['user'].get('id')
-        store_owner = StoreOwner.query.get(int(user_id))
+        owner_id = bc_data.get('owner', {}).get('id', 0)
+        store_owner = StoreOwner.query.get(int(owner_id))
 
         if store_owner is not None:
             db.session.delete(store_owner)
@@ -182,7 +199,7 @@ def authorize():
             'code': session['temp_auth'].get('code', ''),
             'scope': session['temp_auth'].get('scope', ''),
             'context': session['temp_auth'].get('context', ''),
-            'redirect_uri': redirect_uri()
+            'redirect_uri': f'{app.config["APP_URL"]}/auth'
         }
     ).json()
 
@@ -193,17 +210,19 @@ def authorize():
 
         return render_template('error.html', msg=response['error'])
 
-    user_id = int(response['user'].get('id'))
-    owner = StoreOwner.query.get(user_id)
-    config = ImportSettings.query.get(user_id)
+    owner_id = int(response('owner', {}).get('id', 0))
+
+    owner = StoreOwner.query.get(owner_id)
+    config = ImportSettings.query.get(owner_id)
 
     if owner is not None:
         logger.info('Deleting outdated credentials from DB')
+
         db.session.delete(owner)
         db.session.delete(config)
 
     db.session.add(StoreOwner(response))
-    db.session.add(ImportSettings(user_id))
+    db.session.add(ImportSettings(owner_id))
     db.session.commit()
 
     logger.success('Store owner committed to DB')
@@ -212,7 +231,7 @@ def authorize():
 
 
 
-@app.route('/icons/<file_name>.svg', methods=['GET'])
+@app.route('/<file_name>.svg', methods=['GET'])
 def get_icon(file_name):
     response = make_response(render_template(f'icons/{file_name}.svg'))
     response.mimetype = 'image/svg+xml'
@@ -227,110 +246,94 @@ def get_categories():
 
     # requests.get() categories from Big Commerce API
 
-    if app.config['DEMO']():
-        with open('demo/demo-categories.json') as categories:
-            return json.loads(categories.read())
+    # if app.config['DEBUG']:
+    with open('demo/demo-categories.json') as categories:
+        return json.loads(categories.read())
 
     return '{data: []}'
 
 
 
-@app.route('/import-review', methods=['POST'])
-def import_review():
-    if app.config['DEMO']():
-        login_details = '{}'
+@app.route('/init-import', methods=['POST'])
+def init_import():
+    if 'owner_id' not in session:
+        return render_template('error.html', msg='Session has no Owner ID!')
 
-    else:
-        owner_id = session['bc_data'].get('owner').get('id')
-        settings = ImportSettings.query.get(owner_id)
-        supplier = request.form['supplier']
+    try:
+        logger.info('Starting new scrape job')
 
-        if supplier == 'sanmar':
-            login_details = settings.sanmar_config
+        scrape_job = ScrapeJob({
+            'url': request.form['url'],
+            'api': app.config['SCRAPE_API'],
+            'job_type': request.form['import-type'],
+            'supplier': request.form['supplier'],
+            'settings': ImportSettings.query.get(session['owner_id']),
+            'logger': Logger('scrape_job', app.config['LOG'])
+        })
 
-        elif supplier == 'debco':
-            login_details = settings.debco_config
+        scrape_job.run()
 
-        elif supplier == 'technosport':
-            login_details = settings.technosport_config
+        logger.success('Scraper run complete')
+        logger.success(scrape_job.urls)
 
-        elif supplier == 'trimark':
-            login_details = settings.trimark_config
+        for url in scrape_job.urls:
+            logger.info('Pushing upload to DB')
+            logger.info(url)
 
-        else:
-            return render_template('error.html', msg='Could not import from the given URL')
+            db.session.add(ProductUpload({
+                'scrape_id': url.get('id'),
+                'owner_id': session['owner_id'],
+                'job_id': scrape_job.job_id,
+                'meta': scrape_job.json(),
+                'status': 'scraping',
+                'result': '{}'
+            }))
 
-        if login_details == '{}':
-            return render_template('error.html', msg=f'Please add login credentials for {supplier}', btn='Add', uri='/user-settings')
+        db.session.commit()
 
-    session['scrape'] = {
-        'url': request.form['url'],
-        'supplier': request.form['supplier'],
-        'import_type': request.form['import-type'],
-        'login': json.loads(login_details),
-        'items': []
-    }
+    except TypeError as e:
+        return render_template('error.html', msg=e.args[0])
 
-    return render_template('import.html')
+    except KeyError as e:
+        return render_template('error.html', msg=e.args[0], btn='Add', uri='/user-settings')
 
-
-
-@app.route('/scrape', methods=['GET'])
-def init_scrape():
-    logger.info('Scraping product data')
-
-    if app.config['DEMO']():
-        with open('demo/demo-product.json') as product:
-            return product.read()
-
-    # requests.post() to Scrapy cluster REST API /feed endpoint
-    # run_spider(session['scrape'])
-
-    return {'items': session['scrape'].get('items')}
+    return redirect('/product-uploads')
 
 
 
-@app.route("/import", methods=['POST'])
+@app.route('/product-review', methods=['GET'])
+def product_review():
+    job_id = request.args.get('job_id', None)
+    
+    if 'owner_id' not in session or not job_id:
+        return render_template('error.html', msg='Could not retrieve job data!')
+
+    uploads = ProductUpload.query.filter_by(job_id=job_id).all()
+
+    convert = lambda u : json.loads(u.result)
+
+    uploads = list(map(convert, uploads))
+
+    logger.info(f'Found {len(uploads)} uploads')
+    logger.info(json.dumps(uploads, indent=2))
+
+    return render_template('review.html', data=json.dumps(uploads))
+
+
+
+@app.route("/create-products", methods=['POST'])
 def import_products():
-    if app.config['DEMO']():
-        pass
+    owner_id = session['owner_id']
 
-    else:
-        bc_data = session['bc_data']
-        user_id = bc_data['user'].get('id')
+    products = json.loads(request.form['products'])
 
-        products = json.loads(request.form['products'])
-
-        # owner = StoreOwner.query.get(int(user_id))
-
-        # if owner is not None:
-        #     store = BigCommerceStore(owner, client_id(), client_secret())
-        #     logger.success('Set up user store')
-        # else:
-        #     return render_template('results.html', message='Could not find your store!')
-
-        # batch = [] # Change this to dict
-
-        # for product in products:
-        #     time = datetime.now().strftime('%b. %d, %Y at %I:%M %p')
-        #     deferred = store.create_product(product)
-
-        #     batch.append({
-        #         'created': time,
-        #         'product': product,
-        #         'thread': deferred.stash(),
-        #         'active': True
-        #     })
-
-        # session['uploads'].append(batch)
-
-    return render_template('results.html', data=json.dumps([]))
+    return render_template('uploads.html')
 
 
 
 @app.route('/user-settings', methods=['GET'])
 def user_settings():
-    if app.config['DEMO']():
+    if app.config['DEBUG']:
         return render_template('settings.html',
             sanmar={"user_id": "12345", "email": "apparel@scraper.com", "password": "abcd12345", "markup": "15.00"},
             debco={"email": "", "password": "", "markup": "15.00"},
@@ -338,21 +341,24 @@ def user_settings():
             trimark={"email": "apparel@scraper.com", "password": "abcd12345", "markup": "15.00"}
         )
 
-    owner_id = session['bc_data'].get('owner').get('id')
-    settings = ImportSettings.query.get(owner_id)
+    settings = ImportSettings.query.get(session['owner_id'])
 
-    return render_template('settings.html',
-        sanmar=json.loads(settings.sanmar_config),
-        debco=json.loads(settings.debco_config),
-        technosport=json.loads(settings.technosport_config),
-        trimark=json.loads(settings.trimark_config)
-    )
+    if settings:
+        return render_template('settings.html',
+            sanmar=json.loads(settings.sanmar_config),
+            debco=json.loads(settings.debco_config),
+            technosport=json.loads(settings.technosport_config),
+            trimark=json.loads(settings.trimark_config)
+        )
+    else:
+        return render_template('settings.html')
+
 
 
 
 @app.route('/user-settings', methods=['POST'])
 def update_user_settings():
-    if app.config['DEMO']():
+    if app.config['DEBUG']:
         return render_template('settings.html',
             sanmar={"user_id": "12345", "email": "apparel@scraper.com", "password": "abcd12345", "markup": "15.00"},
             debco={"email": "", "password": "", "markup": "15.00"},
@@ -362,8 +368,7 @@ def update_user_settings():
 
     else:
         supplier = request.form.get('supplier', '')
-        owner_id = session['bc_data'].get('owner').get('id')
-        settings = ImportSettings.query.get(owner_id)
+        settings = ImportSettings.query.get(session['owner_id'])
 
         if settings:
             config = {
@@ -397,29 +402,64 @@ def update_user_settings():
 
 
 @app.route('/product-uploads', methods=['GET'])
-def product_uploads():
-    # if session['uploads'] == []:
-        # query db for all uploads 
-        # store uploads in session
-    
-    # return array of {upload_id: xxx, status: ---}
+def get_uploads():
+    if 'owner_id' not in session:
+        return render_template('error.html', msg='Session has no Owner ID!')
 
-    return json.dumps(session['uploads'])
+    uploads = ProductUpload.query.filter_by(owner_id=session['owner_id']).all()
+
+    convert = lambda u : {
+        'scrape_id': u.scrape_id,
+        'job_id': u.job_id,
+        'status': u.status,
+        'result': json.loads(u.result),
+        'meta': json.loads(u.meta)
+    }
+
+    uploads = list(map(convert, uploads))
+
+    logger.info(f'Found {len(uploads)+1} uploads')
+
+    return render_template('uploads.html', data=json.dumps(uploads))
+
+
+
+@app.route('/product-uploads', methods=['DELETE'])
+def delete_uploads():
+    scrape_id = request.get_json().get('scrape_id', None)
+
+    if scrape_id:
+        row = ProductUpload.query.get(scrape_id)
+
+        if row is not None:
+            db.session.delete(row)
+            db.session.commit()
+
+            return json.dumps({'data': None, 'error': None})
+
+        return json.dumps({'data': None, 'error': 'scrape_id doesn\'t exist'})
+
+    return json.dumps({'data': None, 'error': 'No scrape_id given'})
 
 
 
 @app.route('/upload-status', methods=['GET'])
 def active_uploads():
-    # req contains list of upload_ids
-    # session['bc_data'] contains owner_id
-    # query db for all the upload_ids with the owner_id
-    # respond with array of {upload_id: xxx, status: ---}
+    scrape_ids = json.loads( request.args.get('scrape_ids', '[]') )
 
-    return '{}'
- 
+    results = ProductUpload.query.filter(
+        ProductUpload.scrape_id.in_(scrape_ids)
+    ).all()
+
+    convert = lambda u : (u.scrape_id, u.status)
+
+    results = dict(map(convert, results))
+
+    return json.dumps(results)
+
 
 
 if __name__ == '__main__':
-    port = int(os.getenv('PORT', 5000))
+    port = int(os.getenv('PORT', 3000))
 
     app.run(host='0.0.0.0', port=port)
