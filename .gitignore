@@ -2,6 +2,8 @@
 
 .vscode/
 
+node_modules/
+
 test-app/
 
 setup.txt

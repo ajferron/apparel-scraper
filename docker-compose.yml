@@ -1,21 +1,24 @@
 services:
-  scraper-api:
-    image: scraper-api:latest
-    ports:
-      - "5000:5000"
-    depends_on:
-      - redis
-    env_file:
-     - .env
   web-app:
-    build: ./flask-app
+    build: ./web-app
     restart: always
     ports:
       - "3000:3000"
     depends_on:
       - scraper-api
     volumes:
-      - ./flask-app/:/app/
+      - ./web-app/:/app/
+    env_file:
+     - .env
+  scraper-api:
+    build: ./scraper-api
+    restart: always
+    ports:
+      - "5000:5000"
+    depends_on:
+      - redis
+    volumes:
+      - ./scraper-api/:/app/
     env_file:
      - .env
   redis:
