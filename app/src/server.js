@@ -11,7 +11,7 @@ const {ExpressLogger, Logger} = require('../lib/logger');
 
 const app = express();
 const logger = Logger('Scrape API');
-const redis = createClient(process.env.REDIS_URI);
+const redis = createClient(process.env.REDIS_URL);
 
 app.use(ExpressLogger());
 app.use(bodyParser.json());

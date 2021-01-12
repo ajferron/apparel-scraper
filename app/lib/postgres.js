@@ -6,7 +6,7 @@ const {Logger} = require('./logger');
 const pool = (() => {
     // https://help.heroku.com/MDM23G46/why-am-i-getting-an-error-when-i-upgrade-to-pg-8
 
-    const config = parse(process.env.DB_URI);
+    const config = parse(`${process.env.DATABASE_URL}?ssl=true`);
     config.ssl = {rejectUnauthorized: false};
 
     return new Pool(config);
