@@ -52,221 +52,74 @@
                     <div class="nav nav-tabs" role="tablist">
                       <a class="nav-item nav-link active" data-toggle="tab" href="#sanmar" role="tab" aria-selected="true"> SanMar </a>
                       <a class="nav-item nav-link" data-toggle="tab" href="#debco" role="tab" aria-selected="false"> Debco </a>
-                      <a class="nav-item nav-link" data-toggle="tab" href="#trimark" role="tab" aria-selected="false"> Techno Sport </a>
-                      <a class="nav-item nav-link" data-toggle="tab" href="#technosport" role="tab" aria-selected="false"> Trimark </a>
+                      <a class="nav-item nav-link" data-toggle="tab" href="#technosport" role="tab" aria-selected="false"> Techno Sport </a>
+                      <a class="nav-item nav-link" data-toggle="tab" href="#trimark" role="tab" aria-selected="false"> Trimark </a>
                     </div>
                 </nav>
 
-                <div class="tab-content flex-grow-1 mt-4" id="nav-tabContent">
-
-                    <!-- SANMAR SETTINGS -->
-                    <div class="tab-pane fade show active" id="sanmar" role="tabpanel" aria-labelledby="nav-home-tab">
-                        <form action="/user-settings" method="POST">
-                            <div class="form-group">
-                                <span> Login Information </span>
-
-                                <input name="supplier" value="sanmar" type="hidden">
-
-                                <input id="import-type" type="hidden" name="import-type" value="single">
-                                <div class="input-group input-group-sm mt-2">
-                                    <div class="input-group-prepend">
-                                        <span id="sanmar-id-addon" class="input-group-text"> ID </span>
-                                    </div>
-                                    <input id="sanmar-id" class="form-control" name="id" value="{{sanmar['user_id']}}" type="text" aria-describedby="sanmar-id-addon" required>
-                                </div>
- 
-                                <div class="input-group input-group-sm mt-3">
-                                    <div class="input-group-prepend">
-                                        <span id="sanmar-email-addon" class="input-group-text"> Email </span>
-                                    </div>
-                                    <input id="sanmar-email" class="form-control" name="email" value="{{sanmar['email']}}" type="email" aria-describedby="sanmar-email-addon" required>
-                                </div>
-
-                                <div class="input-group input-group-sm mt-3">
-                                    <div class="input-group-prepend">
-                                        <span id="sanmar-pass-addon" class="input-group-text"> Password </span>
-                                    </div>
-                                    <input id="sanmar-pass" class="form-control" name="password"  value="{{sanmar['password']}}" type="password" aria-describedby="sanmar-pass-addon" required>
-                                </div>
-                            </div>
-
-                            <div class="form-group d-flex justify-content-between mt-5">
-                                <div class="form-group mr-4 w-50">
-                                    <label for="sanmar-markup"> Product Markup </label>
-                                    <input id="sanmar-markup" class="form-control form-control-sm" name="markup" value="{{sanmar['markup']}}" type="text" required>
-                                </div>
-
-                                <div class="form-group d-none mr-4 w-25">
-                                    <label for="sanmar-increase"> Price Increase for XL+ </label>
-                                    <input id="sanmar-increase" class="form-control form-control-sm" name="increase" type="text" disabled>
-                                </div>
-
+                <div class="tab-content flex-grow-1 mt-4" id="nav-tab-content">
+                    {% for supplier, config in settings.items() %}
+                        <div class="tab-pane fade active" id="{{supplier}}" role="tabpanel" aria-labelledby="nav-home-tab">
+                            <form action="/user-settings" method="POST">
                                 <div class="form-group">
-                                    <label> <br> </label>
-                                    <div class="form-check">
-                                        <input class="form-check-input" id="sanmar-discontinued" type="checkbox">
-                                        <label class="form-check-label" for="sanmar-discontinued"> Import discontinued products </label>
+                                    <span> Login Information </span>
+    
+                                    <input name="supplier" value="{{supplier}}" type="hidden">
+    
+                                    <input id="import-type" type="hidden" name="import-type" value="single">
+                                    {% if 'user_id' in config %}
+                                        <div class="input-group input-group-sm mt-2">
+                                            <div class="input-group-prepend">
+                                                <span id="{{supplier}}-id-addon" class="input-group-text"> ID </span>
+                                            </div>
+                                            <input id="{{supplier}}-id" class="form-control" name="id" value="{{config['user_id']}}" type="text" aria-describedby="{{supplier}}-id-addon" required>
+                                        </div>
+                                    {% endif %}
+     
+                                    <div class="input-group input-group-sm mt-3">
+                                        <div class="input-group-prepend">
+                                            <span id="{{supplier}}-email-addon" class="input-group-text"> Email </span>
+                                        </div>
+                                        <input id="{{supplier}}-email" class="form-control" name="email" value="{{config.get('email', '')}}" type="email" aria-describedby="{{supplier}}-email-addon" required>
+                                    </div>
+    
+                                    <div class="input-group input-group-sm mt-3">
+                                        <div class="input-group-prepend">
+                                            <span id="{{supplier}}-pass-addon" class="input-group-text"> Password </span>
+                                        </div>
+                                        <input id="{{supplier}}-pass" class="form-control" name="password"  value="{{config.get('password', '')}}" type="password" aria-describedby="{{supplier}}-pass-addon" required>
                                     </div>
                                 </div>
-                            </div>
-
-                            <div class="form-group d-flex justify-content-between mt-5">
-                                <button id="discard-sanmar" class="btn btn-sm btn-outline-secondary mr-4 w-100" type="reset"> Discard </button>
-                                <button id="submit-sanmar" class="btn btn-sm btn-secondary w-100" type="submit"> Save </button>
-                            </div>
-                        </form>
-                    </div>
-
-                    <!-- DEBCO SETTINGS -->
-                    <div class="tab-pane fade" id="debco" role="tabpanel" aria-labelledby="nav-profile-tab">
-                        <form action="/user-settings" method="POST">
-                            <div class="form-group">
-                                <span> Login Information </span>
-
-                                <input name="supplier" value="debco" type="hidden">
- 
-                                <div class="input-group input-group-sm mt-3">
-                                    <div class="input-group-prepend">
-                                        <span id="debco-email-addon" class="input-group-text"> Email </span>
+    
+                                <div class="form-group d-flex justify-content-between mt-5">
+                                    <div class="form-group mr-4 w-50">
+                                        <label for="{{supplier}}-markup"> Product Markup </label>
+                                        <input id="{{supplier}}-markup" class="form-control form-control-sm" name="markup" value="{{config.get('markup', '')}}" type="text" required>
                                     </div>
-                                    <input id="debco-email" class="form-control" name="email" value="{{debco['email']}}" type="email" aria-describedby="debco-email-addon" disabled>
-                                </div>
-
-                                <div class="input-group input-group-sm mt-3">
-                                    <div class="input-group-prepend">
-                                        <span id="debco-pass-addon" class="input-group-text"> Password </span>
+    
+                                    <div class="form-group d-none mr-4 w-25">
+                                        <label for="{{supplier}}-increase"> Price Increase for XL+ </label>
+                                        <input id="{{supplier}}-increase" class="form-control form-control-sm" name="increase" type="text" disabled>
                                     </div>
-                                    <input id="debco-pass" class="form-control" name="password" value="{{debco['password']}}" type="password" aria-describedby="debco-pass-addon" disabled>
-                                </div>
-                            </div>
-
-                            <div class="form-group d-flex justify-content-between mt-5">
-                                <div class="form-group mr-4 w-50">
-                                    <label for="debco-markup"> Product Markup </label>
-                                    <input id="debco-markup" class="form-control form-control-sm" name="markup" value="{{sanmar['markup']}}" type="text" required>
-                                </div>
-
-                                <div class="form-group d-none mr-4 w-25">
-                                    <label for="debco-increase"> Price Increase for XL+ </label>
-                                    <input id="debco-increase" class="form-control form-control-sm" name="increase" type="text" disabled>
-                                </div>
-
-                                <div class="form-group">
-                                    <label> <br> </label>
-                                    <div class="form-check">
-                                        <input class="form-check-input" id="debco-discontinued" type="checkbox">
-                                        <label class="form-check-label" for="debco-discontinued"> Import discontinued products </label>
+    
+                                    <div class="form-group">
+                                        <label> <br> </label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" id="{{supplier}}-discontinued" type="checkbox">
+                                            <label class="form-check-label" for="{{supplier}}-discontinued"> Import discontinued products </label>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-
-                            <div class="form-group d-flex justify-content-between mt-5">
-                                <button id="discard-debco" class="btn btn-sm btn-outline-secondary mr-4 w-100" type="reset"> Discard </button>
-                                <button id="submit-debco" class="btn btn-sm btn-secondary w-100" type="submit"> Save </button>
-                            </div>
-                        </form>
-                    </div>
-
-                    <!-- TECHNOSPORT SETTINGS -->
-                    <div class="tab-pane fade" id="technosport" role="tabpanel" aria-labelledby="nav-contact-tab">
-                        <form action="/user-settings" method="POST">
-                            <div class="form-group">
-                                <span> Login Information </span>
-
-                                <input name="supplier" value="technosport" type="hidden">
- 
-                                <div class="input-group input-group-sm mt-3">
-                                    <div class="input-group-prepend">
-                                        <span id="technosport-email-addon" class="input-group-text"> Email </span>
-                                    </div>
-                                    <input id="technosport-email" class="form-control" name="email" value="{{technosport['email']}}" type="email" aria-describedby="technosport-email-addon" required>
+    
+                                <div class="form-group d-flex justify-content-between mt-5">
+                                    <button id="discard-{{supplier}}" class="btn btn-sm btn-outline-secondary mr-4 w-100" type="reset"> Discard </button>
+                                    <button id="submit-{{supplier}}" class="btn btn-sm btn-secondary w-100" type="submit"> Save </button>
                                 </div>
-
-                                <div class="input-group input-group-sm mt-3">
-                                    <div class="input-group-prepend">
-                                        <span id="technosport-pass-addon" class="input-group-text"> Password </span>
-                                    </div>
-                                    <input id="technosport-pass" class="form-control" name="password" value="{{technosport['password']}}" type="password" aria-describedby="technosport-pass-addon" required>
-                                </div>
-                            </div>
-
-                            <div class="form-group d-flex justify-content-between mt-5">
-                                <div class="form-group mr-4 w-50">
-                                    <label for="technosport-markup"> Product Markup </label>
-                                    <input id="technosport-markup" class="form-control form-control-sm" name="markup" value="{{sanmar['markup']}}" type="text" required>
-                                </div>
-
-                                <div class="form-group d-none mr-4 w-25">
-                                    <label for="technosport-increase"> Price Increase for XL+ </label>
-                                    <input id="technosport-increase" class="form-control form-control-sm" name="increase" type="text" disabled>
-                                </div>
-
-                                <div class="form-group">
-                                    <label> <br> </label>
-                                    <div class="form-check">
-                                        <input class="form-check-input" id="technosport-discontinued" type="checkbox">
-                                        <label class="form-check-label" for="technosport-discontinued"> Import discontinued products </label>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="form-group d-flex justify-content-between mt-5">
-                                <button id="discard-technosport" class="btn btn-sm btn-outline-secondary mr-4 w-100" type="reset"> Discard </button>
-                                <button id="submit-technosport" class="btn btn-sm btn-secondary w-100" type="submit"> Save </button>
-                            </div>
-                        </form>
-                    </div>
-
-                    <!-- TRIMARK SETTINGS -->
-                    <div class="tab-pane fade" id="trimark" role="tabpanel" aria-labelledby="nav-contact-tab">
-                        <form action="/user-settings" method="POST">
-                            <div class="form-group">
-                                <span> Login Information </span>
-
-                                <input name="supplier" value="trimark" type="hidden">
- 
-                                <div class="input-group input-group-sm mt-3">
-                                    <div class="input-group-prepend">
-                                        <span id="trimark-email-addon" class="input-group-text"> Email </span>
-                                    </div>
-                                    <input id="trimark-email" class="form-control" name="email" value="{{trimark['email']}}" type="email" aria-describedby="trimark-email-addon" required>
-                                </div>
-
-                                <div class="input-group input-group-sm mt-3">
-                                    <div class="input-group-prepend">
-                                        <span id="trimark-pass-addon" class="input-group-text"> Password </span>
-                                    </div>
-                                    <input id="trimark-pass" class="form-control" name="password" value="{{trimark['password']}}" type="password" aria-describedby="trimark-pass-addon" required>
-                                </div>
-                            </div>
-
-                            <div class="form-group d-flex justify-content-between mt-5">
-                                <div class="form-group mr-4 w-50">
-                                    <label for="trimark-markup"> Product Markup </label>
-                                    <input id="trimark-markup" class="form-control form-control-sm" name="markup" value="{{sanmar['markup']}}" type="text" required>
-                                </div>
-
-                                <div class="form-group d-none mr-4 w-25">
-                                    <label for="trimark-increase"> Price Increase for XL+ </label>
-                                    <input id="trimark-increase" class="form-control form-control-sm" name="increase" type="text" disabled>
-                                </div>
-
-                                <div class="form-group">
-                                    <label> <br> </label>
-                                    <div class="form-check">
-                                        <input class="form-check-input" id="trimark-discontinued" type="checkbox">
-                                        <label class="form-check-label" for="trimark-discontinued"> Import discontinued products </label>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="form-group d-flex justify-content-between mt-5">
-                                <button id="discard-trimark" class="btn btn-sm btn-outline-secondary mr-4 w-100" type="reset"> Discard </button>
-                                <button id="submit-trimark" class="btn btn-sm btn-secondary w-100" type="submit"> Save </button>
-                            </div>
-                        </form>
-                    </div>
+                            </form>
+                        </div>
+                    {% endfor %}
                 </div>
+
             </div>
 
             <div class="row bot flex-grow-1"></div>
@@ -274,6 +127,9 @@
 
         <div class="col h-100"></div>
     </div>
+
+
+    <script> $('#sanmar').addClass('show') </script>
 </body>
 
 

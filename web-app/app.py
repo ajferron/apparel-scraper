@@ -2,7 +2,6 @@ from flask import Flask, request, session, render_template, make_response, redir
 from utils import Logger, verify_sig, ScrapeJob
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
-import dotenv
 import requests
 import json
 import os
@@ -19,12 +18,8 @@ import os
 #   Clean up loggers, add logging to review.js, uploads.js
 
 
-
 app = Flask(__name__)
 
-
-if os.path.exists('.env'):
-    dotenv.load_dotenv()
 
 app.config['APP_URL'] = os.getenv('APP_URL', 'http://127.0.0.1:3000')
 app.config['APP_CLIENT_ID'] = os.getenv('APP_CLIENT_ID')
@@ -38,7 +33,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SCRAPE_API'] = os.getenv('SCRAPE_API', 'http://apparel-scraper_scraper-api_1:5000')
 app.config['BC_API'] = os.getenv('BC_API', 'http://apparel-scraper_bc-api_1:8000')
 
-app.config['DEMO_ID'] = os.getenv('DEMO_ID')
+app.config['DEMO_ID'] = os.getenv('DEMO_ID', 0)
 app.config['DEBUG'] = os.getenv('DEBUG') != '0'
 app.config['LOG'] = os.getenv('LOG') != '0'
 
@@ -128,6 +123,17 @@ def reset_session_timeout():
 
 
 
+@app.route('/<file_name>.svg', methods=['GET'])
+def get_icon(file_name):
+    response = make_response(render_template(f'icons/{file_name}.svg'))
+    response.mimetype = 'image/svg+xml'
+
+    return response
+
+
+
+# BIG COMMERCE oAUTH
+
 @app.route('/', methods=['GET'])
 def index():
     if session.get('owner_id', 0):
@@ -154,19 +160,6 @@ def index():
 
 
 
-
-@app.route('/auth')
-def auth():
-    session['temp_auth'] = {
-        'code': request.args.get('code', ''),
-        'scope': request.args.get('scope', ''),
-        'context': request.args.get('context', '')
-    }
-
-    return render_template('auth.html')
-
-
-
 @app.route('/uninstall')
 def uninstall():
     payload = request.args.get('signed_payload', False)
@@ -181,6 +174,18 @@ def uninstall():
             db.session.commit()
 
     return render_template('uninstall.html')
+
+
+
+@app.route('/auth')
+def auth():
+    session['temp_auth'] = {
+        'code': request.args.get('code', ''),
+        'scope': request.args.get('scope', ''),
+        'context': request.args.get('context', '')
+    }
+
+    return render_template('auth.html')
 
 
 
@@ -231,28 +236,176 @@ def authorize():
 
 
 
-@app.route('/<file_name>.svg', methods=['GET'])
-def get_icon(file_name):
-    response = make_response(render_template(f'icons/{file_name}.svg'))
-    response.mimetype = 'image/svg+xml'
+ ######  ######## ######## ######## #### ##    ##  ######    ######
+##    ## ##          ##       ##     ##  ###   ## ##    ##  ##    ##
+##       ##          ##       ##     ##  ####  ## ##        ##
+ ######  ######      ##       ##     ##  ## ## ## ##   ####  ######
+      ## ##          ##       ##     ##  ##  #### ##    ##        ##
+##    ## ##          ##       ##     ##  ##   ### ##    ##  ##    ##
+ ######  ########    ##       ##    #### ##    ##  ######    ######
 
-    return response
+@app.route('/user-settings', methods=['GET'])
+def user_settings():
+    if not app.config['DEBUG']:
+        return render_template('settings.html', settings={
+            'sanmar': {"user_id": "12345", "email": "apparel@scraper.com", "password": "abcd12345", "markup": "15.00"},
+            'debco': {"email": "", "password": "", "markup": "15.00"},
+            'technosport': {"email": "apparel@scraper.com", "password": "abcd12345", "markup": "15.00"},
+            'trimark': {"email": "apparel@scraper.com", "password": "abcd12345", "markup": "15.00"}
+        })
+
+    settings = ImportSettings.query.get(session['owner_id'])
+
+    if settings:
+        return render_template('settings.html', settings={
+            'sanmar': json.loads(settings.sanmar_config),
+            'debco': json.loads(settings.debco_config),
+            'technosport': json.loads(settings.technosport_config),
+            'trimark': json.loads(settings.trimark_config)
+        })
+    else:
+        return render_template('settings.html')
 
 
 
-@app.route("/categories", methods=['GET'])
-def get_categories():
-    logger.info('Getting product categories from store')
+@app.route('/user-settings', methods=['POST'])
+def update_user_settings():
+    if not app.config['DEBUG']:
+        return render_template('settings.html', settings={
+            'sanmar': {"user_id": "12345", "email": "apparel@scraper.com", "password": "abcd12345", "markup": "15.00"},
+            'debco': {"email": "", "password": "", "markup": "15.00"},
+            'technosport': {"email": "apparel@scraper.com", "password": "abcd12345", "markup": "15.00"},
+            'trimark': {"email": "apparel@scraper.com", "password": "abcd12345", "markup": "15.00"}
+        })
 
-    # requests.get() categories from Big Commerce API
+    else:
+        supplier = request.form.get('supplier', '')
+        settings = ImportSettings.query.get(session['owner_id'])
 
-    # if app.config['DEBUG']:
-    with open('demo/demo-categories.json') as categories:
-        return json.loads(categories.read())
+        if settings:
+            config = {
+                'email': request.form.get('email', ''),
+                'password': request.form.get('password', ''),
+                'markup': request.form.get('markup', '')
+            }
 
-    return '{data: []}'
+            if supplier == 'sanmar':
+                config['user_id'] = request.form.get('id', '')
+                settings.sanmar_config = json.dumps(config)
+
+            elif supplier == 'debco':
+                settings.debco_config = json.dumps(config)
+
+            elif supplier == 'technosport':
+                settings.technosport_config = json.dumps(config)
+
+            elif supplier == 'trimark':
+                settings.trimark_config = json.dumps(config)
+
+            db.session.commit()
+
+        return render_template('settings.html', settings={
+            'sanmar': json.loads(settings.sanmar_config),
+            'debco': json.loads(settings.debco_config),
+            'technosport': json.loads(settings.technosport_config),
+            'trimark': json.loads(settings.trimark_config)
+        })
 
 
+
+##     ## ########  ##        #######     ###    ########   ######
+##     ## ##     ## ##       ##     ##   ## ##   ##     ## ##    ##
+##     ## ##     ## ##       ##     ##  ##   ##  ##     ## ##
+##     ## ########  ##       ##     ## ##     ## ##     ##  ######
+##     ## ##        ##       ##     ## ######### ##     ##       ##
+##     ## ##        ##       ##     ## ##     ## ##     ## ##    ##
+ #######  ##        ########  #######  ##     ## ########   ######
+
+@app.route('/product-uploads', methods=['GET'])
+def product_uploads():
+    if 'owner_id' not in session:
+        return render_template('error.html', msg='Session has no Owner ID!')
+
+    uploads = ProductUpload.query.filter_by(owner_id=session['owner_id']).all()
+
+    convert = lambda u : {
+        'scrape_id': u.scrape_id,
+        'job_id': u.job_id,
+        'status': u.status,
+        'result': json.loads(u.result),
+        'meta': json.loads(u.meta)
+    }
+
+    uploads = list(map(convert, uploads))
+
+    logger.info(f'Found {len(uploads)+1} uploads')
+
+    return render_template('uploads.html', data=json.dumps(uploads))
+
+
+
+@app.route('/product-uploads', methods=['DELETE'])
+def del_product_uploads():
+    scrape_id = request.get_json().get('scrape_id', None)
+
+    if scrape_id:
+        row = ProductUpload.query.get(scrape_id)
+
+        if row is not None:
+            db.session.delete(row)
+            db.session.commit()
+
+            return json.dumps({'data': None, 'error': None})
+
+        return json.dumps({'data': None, 'error': 'scrape_id doesn\'t exist'})
+
+    return json.dumps({'data': None, 'error': 'No scrape_id given'})
+
+
+
+@app.route('/product-review', methods=['GET'])
+def product_review():
+    job_id = request.args.get('job_id', None)
+    
+    if 'owner_id' not in session or not job_id:
+        return render_template('error.html', msg='Could not retrieve job data!')
+
+    uploads = ProductUpload.query.filter_by(job_id=job_id).all()
+
+    convert = lambda u : json.loads(u.result)
+
+    uploads = list(map(convert, uploads))
+
+    logger.info(f'Found {len(uploads)} uploads')
+    logger.info(json.dumps(uploads, indent=2))
+
+    return render_template('review.html', data=json.dumps(uploads))
+
+
+
+@app.route('/upload-status', methods=['GET'])
+def upload_status():
+    scrape_ids = json.loads( request.args.get('scrape_ids', '[]') )
+
+    results = ProductUpload.query.filter(
+        ProductUpload.scrape_id.in_(scrape_ids)
+    ).all()
+
+    convert = lambda u : (u.scrape_id, u.status)
+
+    results = dict(map(convert, results))
+
+    return json.dumps(results)
+
+
+
+ ######   ######  ########             ###    ########  ####
+##    ## ##    ## ##     ##           ## ##   ##     ##  ##
+##       ##       ##     ##          ##   ##  ##     ##  ##
+ ######  ##       ########  ####### ##     ## ########   ##
+      ## ##       ##   ##           ######### ##         ##
+##    ## ##    ## ##    ##          ##     ## ##         ##
+ ######   ######  ##     ##         ##     ## ##        ####
 
 @app.route('/init-import', methods=['POST'])
 def init_import():
@@ -301,161 +454,29 @@ def init_import():
 
 
 
-@app.route('/product-review', methods=['GET'])
-def product_review():
-    job_id = request.args.get('job_id', None)
-    
-    if 'owner_id' not in session or not job_id:
-        return render_template('error.html', msg='Could not retrieve job data!')
+# BIG COMMERCE API
 
-    uploads = ProductUpload.query.filter_by(job_id=job_id).all()
+@app.route("/categories", methods=['GET'])
+def get_categories():
+    logger.info('Getting product categories from store')
 
-    convert = lambda u : json.loads(u.result)
+    # requests.get() categories from Big Commerce API
 
-    uploads = list(map(convert, uploads))
+    if app.config['DEBUG']:
+        with open('demo/demo-categories.json') as categories:
+            return json.loads(categories.read())
 
-    logger.info(f'Found {len(uploads)} uploads')
-    logger.info(json.dumps(uploads, indent=2))
-
-    return render_template('review.html', data=json.dumps(uploads))
+    return '{data: []}'
 
 
 
 @app.route("/create-products", methods=['POST'])
-def import_products():
+def create_products():
     owner_id = session['owner_id']
 
     products = json.loads(request.form['products'])
 
     return render_template('uploads.html')
-
-
-
-@app.route('/user-settings', methods=['GET'])
-def user_settings():
-    if app.config['DEBUG']:
-        return render_template('settings.html',
-            sanmar={"user_id": "12345", "email": "apparel@scraper.com", "password": "abcd12345", "markup": "15.00"},
-            debco={"email": "", "password": "", "markup": "15.00"},
-            technosport={"email": "apparel@scraper.com", "password": "abcd12345", "markup": "15.00"},
-            trimark={"email": "apparel@scraper.com", "password": "abcd12345", "markup": "15.00"}
-        )
-
-    settings = ImportSettings.query.get(session['owner_id'])
-
-    if settings:
-        return render_template('settings.html',
-            sanmar=json.loads(settings.sanmar_config),
-            debco=json.loads(settings.debco_config),
-            technosport=json.loads(settings.technosport_config),
-            trimark=json.loads(settings.trimark_config)
-        )
-    else:
-        return render_template('settings.html')
-
-
-
-
-@app.route('/user-settings', methods=['POST'])
-def update_user_settings():
-    if app.config['DEBUG']:
-        return render_template('settings.html',
-            sanmar={"user_id": "12345", "email": "apparel@scraper.com", "password": "abcd12345", "markup": "15.00"},
-            debco={"email": "", "password": "", "markup": "15.00"},
-            technosport={"email": "apparel@scraper.com", "password": "abcd12345", "markup": "15.00"},
-            trimark={"email": "apparel@scraper.com", "password": "abcd12345", "markup": "15.00"}
-        )
-
-    else:
-        supplier = request.form.get('supplier', '')
-        settings = ImportSettings.query.get(session['owner_id'])
-
-        if settings:
-            config = {
-                'user_id': request.form.get('id', ''),
-                'email': request.form.get('email', ''),
-                'password': request.form.get('password', ''),
-                'markup': request.form.get('markup', '')
-            }
-
-            if supplier == 'sanmar':
-                settings.sanmar_config = json.dumps(config)
-
-            elif supplier == 'debco':
-                settings.debco_config = json.dumps(config)
-
-            elif supplier == 'technosport':
-                settings.technosport_config = json.dumps(config)
-
-            elif supplier == 'trimark':
-                settings.trimark_config = json.dumps(config)
-
-            db.session.commit()
-
-        return render_template('settings.html',
-            sanmar=json.loads(settings.sanmar_config),
-            debco=json.loads(settings.debco_config),
-            technosport=json.loads(settings.technosport_config),
-            trimark=json.loads(settings.trimark_config)
-        )
-
-
-
-@app.route('/product-uploads', methods=['GET'])
-def get_uploads():
-    if 'owner_id' not in session:
-        return render_template('error.html', msg='Session has no Owner ID!')
-
-    uploads = ProductUpload.query.filter_by(owner_id=session['owner_id']).all()
-
-    convert = lambda u : {
-        'scrape_id': u.scrape_id,
-        'job_id': u.job_id,
-        'status': u.status,
-        'result': json.loads(u.result),
-        'meta': json.loads(u.meta)
-    }
-
-    uploads = list(map(convert, uploads))
-
-    logger.info(f'Found {len(uploads)+1} uploads')
-
-    return render_template('uploads.html', data=json.dumps(uploads))
-
-
-
-@app.route('/product-uploads', methods=['DELETE'])
-def delete_uploads():
-    scrape_id = request.get_json().get('scrape_id', None)
-
-    if scrape_id:
-        row = ProductUpload.query.get(scrape_id)
-
-        if row is not None:
-            db.session.delete(row)
-            db.session.commit()
-
-            return json.dumps({'data': None, 'error': None})
-
-        return json.dumps({'data': None, 'error': 'scrape_id doesn\'t exist'})
-
-    return json.dumps({'data': None, 'error': 'No scrape_id given'})
-
-
-
-@app.route('/upload-status', methods=['GET'])
-def active_uploads():
-    scrape_ids = json.loads( request.args.get('scrape_ids', '[]') )
-
-    results = ProductUpload.query.filter(
-        ProductUpload.scrape_id.in_(scrape_ids)
-    ).all()
-
-    convert = lambda u : (u.scrape_id, u.status)
-
-    results = dict(map(convert, results))
-
-    return json.dumps(results)
 
 
 
