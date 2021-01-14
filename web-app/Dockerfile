@@ -6,5 +6,7 @@ COPY . /app
 
 RUN pip install -r requirements.txt
 
-ENTRYPOINT ["python"]
-CMD ["app.py"]
+ENV PORT 3000
+EXPOSE 3000
+
+CMD ["gunicorn", "-b 0.0.0.0:3000", "app:app"]
