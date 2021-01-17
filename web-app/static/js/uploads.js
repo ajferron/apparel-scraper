@@ -1,17 +1,12 @@
 import ScrapeJob from './model/ScrapeJob.js'
 
-$(document).ready(() => {
-    loadJobData()
+$(document).ready(() => loadJobData());
 
-    $('#job-data').on('change', loadJobData)
-});
-
-
-$(document).on("click", '.card-header', function() {
+$(document).on("click", '.card-header', function(e) {
     $(this).next().collapse('toggle');
 });
 
-$(document).on("click", '.status-btn', function() {
+$(document).on("click", '.status-btn', function(e) {
     e.stopPropagation()
 });
 

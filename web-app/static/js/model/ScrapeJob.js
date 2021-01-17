@@ -13,7 +13,7 @@ function ScrapeJob(scrapes, meta={}) {
             return clearInterval(poll);
 
         const scrape_ids = JSON.stringify(active.map(s => s.scrape_id))
-        
+
         fetch(`/upload-status?${new URLSearchParams({scrape_ids})}`, 
             {method: 'GET', credentials: 'same-origin'}
         )
@@ -25,7 +25,7 @@ function ScrapeJob(scrapes, meta={}) {
                     location.reload();
                 }
 
-                if (poll_count >= 10) {
+                if (poll_count >= 15) {
                     clearInterval(poll);
                 }
 
@@ -36,7 +36,7 @@ function ScrapeJob(scrapes, meta={}) {
 
                 clearInterval(poll);
             })
-    }, 3000)
+    }, 5000)
 
 
     return (
@@ -78,12 +78,14 @@ function ScrapeJob(scrapes, meta={}) {
                                     {
                                         // Set on creation (flask-app, app.py:288)
                                         scraping: 'scraping...', 
-                                        // Set on scrape completion (scraper-api, server.js:138)
+                                        // Set on scrape completion (scraper-api, server.js:107)
                                         scraped: link('Ready for Review'),
                                         // Set on review.html submission (flask-app, app.py:---)
                                         uploading: 'uploading...',
                                         // Set on upload completion (bigcommerce-api, server.js:---)
-                                        complete: link('Complete')
+                                        complete: link('Complete'),
+                                        // Set on scrape failure (scraper-api, server.js:120)
+                                        failed: 'failed'
                                     }
                                 )[meta.status]
                             })()

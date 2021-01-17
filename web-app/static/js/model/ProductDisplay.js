@@ -69,7 +69,7 @@ class ProductDisplay {
 
 
     set description(d) {
-        var editor = this.display.find('.product-description .ql-editor')
+        var editor = this.display.find('.product-description')
 
         editor.html(d)
 
