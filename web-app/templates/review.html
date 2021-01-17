@@ -23,16 +23,6 @@
 </head>
 
 <body>
-
-<!-- ######   #######  ##    ## ######## ######## ##    ## ########
-    ##    ## ##     ## ###   ##    ##    ##       ###   ##    ##
-    ##       ##     ## ####  ##    ##    ##       ####  ##    ##
-    ##       ##     ## ## ## ##    ##    ######   ## ## ##    ##
-    ##       ##     ## ##  ####    ##    ##       ##  ####    ##
-    ##    ## ##     ## ##   ###    ##    ##       ##   ###    ##
-     ######   #######  ##    ##    ##    ######## ##    ##    ##    -->
-
-
     <div id="import-review" class="row h-100">
         <div class="col d-flex align-items-center justify-content-end mr-5 h-100">
             <button id="left-btn">
@@ -75,17 +65,6 @@
         </div>
     </div>
 
-
-
-<!-- #######  ##     ## ######## ########  ##          ###    ##    ##  ######
-    ##     ## ##     ## ##       ##     ## ##         ## ##    ##  ##  ##    ##
-    ##     ## ##     ## ##       ##     ## ##        ##   ##    ####   ##
-    ##     ## ##     ## ######   ########  ##       ##     ##    ##     ######
-    ##     ##  ##   ##  ##       ##   ##   ##       #########    ##          ##
-    ##     ##   ## ##   ##       ##    ##  ##       ##     ##    ##    ##    ##
-     #######     ###    ######## ##     ## ######## ##     ##    ##     ###### -->
-
-
     <div id="overlay"></div>
 
     <div id="error-wrapper" class="center">
@@ -101,17 +80,6 @@
         <img id="loading-icon" src="load.svg" alt="">
         <span id="load-status"> </span>
     </div>
-
-
-
-<!--##     ##  #######  ########     ###    ##        ######
-    ###   ### ##     ## ##     ##   ## ##   ##       ##    ##
-    #### #### ##     ## ##     ##  ##   ##  ##       ##
-    ## ### ## ##     ## ##     ## ##     ## ##        ######
-    ##     ## ##     ## ##     ## ######### ##             ##
-    ##     ## ##     ## ##     ## ##     ## ##       ##    ##
-    ##     ##  #######  ########  ##     ## ########  ###### -->
-
 
     <div class="modal fade" id="confirm-modal" tabindex="-1" role="dialog" aria-labelledby="confirm-modal-label" aria-hidden="true">
         <div class="modal-dialog">
@@ -161,85 +129,6 @@
         </div>
     </div>
 
-
-
-<!-- ######   ######  ########  #### ########  ########  ######
-    ##    ## ##    ## ##     ##  ##  ##     ##    ##    ##    ##
-    ##       ##       ##     ##  ##  ##     ##    ##    ##
-     ######  ##       ########   ##  ########     ##     ######
-          ## ##       ##   ##    ##  ##           ##          ##
-    ##    ## ##    ## ##    ##   ##  ##           ##    ##    ##
-     ######   ######  ##     ## #### ##           ##     ###### -->
-
-
-    <script>
-        function expand(e) {
-            let all = $('.dropdown-submenu .dropdown-menu')
-            let dd = $(e.target).next('.dropdown-menu')
-
-            if (dd.is(":visible")) {
-                dd.hide()
-                return
-            }
-
-            all.hide()
-            dd.show()
-
-            e.stopPropagation();
-            e.preventDefault();
-        }
-
-
-        function setCategory(e) {
-            var target = $(e.target)
-
-            if ( target.is('input') ) {
-                var item = target.parent('.dropdown-item')
-
-            } else {
-                if ( target.is('.dropdown-item') )
-                    var item = target
-
-                if ( target.is('span') )
-                    var item = target.first().parent('.dropdown-item')
-
-                var box = item.find('input')
-                box.prop("checked", !box.prop('checked'))
-            }
-
-            let dropdown = target.closest('.category.dropdown')
-            let input = dropdown.find('input[name="category"]')
-
-            let btn = dropdown.find('button div')
-            let name = item.find('.name')
-            let label = btn.text().trim()
-            let category = name.text().trim()
-
-            if (label.includes(`, ${category}`))
-                btn.html(label.replace(`, ${category}`, ''))
-
-            else if (label.includes(category))
-                btn.html(label === category ? 'Choose...' : label.replace(`${category}, `, '') )
-
-            else
-                btn.html(label === 'Choose...' ? category : `${label}, ${category}`)
-
-            item.toggleClass('selected')
-            e.stopPropagation();
-
-            // e.preventDefault(); Do NOT uncomment this
-        }
-    </script>
-
-
-
-<!--######## ######## ##     ## ########  ##          ###    ######## ########  ######
-       ##    ##       ###   ### ##     ## ##         ## ##      ##    ##       ##    ##
-       ##    ##       #### #### ##     ## ##        ##   ##     ##    ##       ##
-       ##    ######   ## ### ## ########  ##       ##     ##    ##    ######    ######
-       ##    ##       ##     ## ##        ##       #########    ##    ##             ##
-       ##    ##       ##     ## ##        ##       ##     ##    ##    ##       ##    ##
-       ##    ######## ##     ## ##        ######## ##     ##    ##    ########  ###### -->
 
 
     <script id='product-template' type='text/template'>
@@ -304,6 +193,7 @@
         </div>
     </script>
 
+    <script src="../static/js/utils.js"></script>
     <script src="../static/js/review.js" type="module"></script>
 </body>
 
