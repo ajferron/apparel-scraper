@@ -18,33 +18,30 @@ import os
 #   Clean up loggers, add logging to review.js, uploads.js
 
 
+
 app = Flask(__name__)
 
-
-app.config['APP_URL'] = os.getenv('APP_URL', 'http://127.0.0.1:3000')
-app.config['APP_CLIENT_ID'] = os.getenv('APP_CLIENT_ID')
-app.config['APP_CLIENT_SECRET'] = os.getenv('APP_CLIENT_SECRET')
+# FLASK SESSION
 app.config['SESSION_SECRET'] = os.getenv('SESSION_SECRET')
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
 
+# BIGCOMMERCE OAUTH
+app.config['APP_URL'] = os.getenv('APP_URL', 'http://127.0.0.1:3000')
+app.config['APP_CLIENT_ID'] = os.getenv('APP_CLIENT_ID')
+app.config['APP_CLIENT_SECRET'] = os.getenv('APP_CLIENT_SECRET')
+
+# POSTRES CREDENTIALS
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# SERVICES
 app.config['SCRAPE_API'] = os.getenv('SCRAPE_API', 'http://apparel-scraper_scraper-api_1:5000')
 app.config['BC_API'] = os.getenv('BC_API', 'http://apparel-scraper_bc-api_1:8000')
 
-app.config['DEMO_ID'] = os.getenv('DEMO_ID', 0)
+# DEBUGGING
 app.config['DEBUG'] = os.getenv('DEBUG') != '0'
+app.config['DEMO_ID'] = os.getenv('DEMO_ID', 0)
 app.config['LOG'] = os.getenv('LOG') != '0'
-
-
-
-def client_id():
-    return app.config['APP_CLIENT_ID']
-
-
-def client_secret():
-    return app.config['APP_CLIENT_SECRET']
 
 
 
@@ -141,7 +138,7 @@ def index():
 
     else:
         payload = request.args.get('signed_payload', False)
-        bc_data = verify_sig(payload, client_secret())
+        bc_data = verify_sig(payload, app.config['APP_CLIENT_SECRET'])
 
         if payload and bc_data:
             session['owner_id'] = int(bc_data['owner']['id'])
@@ -163,7 +160,7 @@ def index():
 @app.route('/uninstall')
 def uninstall():
     payload = request.args.get('signed_payload', False)
-    bc_data = verify_sig(payload, client_secret())
+    bc_data = verify_sig(payload, app.config['APP_CLIENT_SECRET'])
 
     if bc_data:
         owner_id = bc_data.get('owner', {}).get('id', 0)
@@ -198,8 +195,8 @@ def authorize():
         url='https://login.bigcommerce.com/oauth2/token', 
         headers={'content-type': 'application/x-www-form-urlencoded'},
         data={
-            'client_id': client_id(),
-            'client_secret': client_secret(),
+            'client_id': app.config['APP_CLIENT_ID'],
+            'client_secret': app.config['APP_CLIENT_SECRET'],
             'grant_type': 'authorization_code',
             'code': session['temp_auth'].get('code', ''),
             'scope': session['temp_auth'].get('scope', ''),
@@ -215,7 +212,7 @@ def authorize():
 
         return render_template('error.html', msg=response['error'])
 
-    owner_id = int(response('owner', {}).get('id', 0))
+    owner_id = int(response.get('user', {}).get('id', 0))
 
     owner = StoreOwner.query.get(owner_id)
     config = ImportSettings.query.get(owner_id)
@@ -385,7 +382,7 @@ def product_review():
 
 @app.route('/upload-status', methods=['GET'])
 def upload_status():
-    scrape_ids = json.loads( request.args.get('scrape_ids', '[]') )
+    scrape_ids = json.loads(request.args.get('scrape_ids', '[]'))
 
     results = ProductUpload.query.filter(
         ProductUpload.scrape_id.in_(scrape_ids)
