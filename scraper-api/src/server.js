@@ -115,9 +115,11 @@ app.post('/feed', async (req, res) => {
             .catch(async () => {
                 logger.error(`Failed scrape job!`)
 
+                const output = {'error': 'Failed to upload'}
+
                 await pg.update({
                     table: 'product_uploads', 
-                    columns: {'result':JSON.stringify({'error': 'Failed to upload'})}, 
+                    columns: {'result':JSON.stringify(output), 'status':'failed'},
                     filters: {'job_id':meta.job_id}, 
                     callback: redis_cleaner
                 })
