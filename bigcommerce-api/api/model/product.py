@@ -11,7 +11,7 @@ class Product():
         self.swatch = product.get('swatch', [{}])
         self.sizes = product.get('sizes', [{}])
 
-        self.price = float(self.sizes[0].get('price', -1))
+        self.price = float(self.sizes[0].get('price', 0))
 
         self.modifiers = {}
         self.id = -1
@@ -21,13 +21,11 @@ class Product():
 
     @property
     def images(self):
-        self._images = []
-
-        for i, color in enumerate(self.swatch):
+        for i, swatch in enumerate(self.swatch):
             self._images.append({
-                'description': color,
-                'image_url': self.swatch.get(color),
-                'is_thumbnail': color == 'Thumbnail',
+                'description': swatch.get('color', '-'),
+                'image_url': swatch.get('url', '-'),
+                'is_thumbnail': swatch.get('url') == 'Thumbnail',
                 'sort_order': i
             })
 

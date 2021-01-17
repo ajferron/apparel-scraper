@@ -1,33 +1,36 @@
-# from twisted.internet import threads
 from .upload import ProductUpload
 from .product import Product
 from .modifier import Modifier
-# import crochet
 import requests
 import json
 
 
 class BigCommerceStore():
-    def __init__(self, owner, client_id, client_secret):
-        self.store_hash = owner.store_hash
-        self.access_token = owner.access_token
-        self.client_secret = client_secret
-        self.client_id = client_id
+    def __init__(self, config):
+        self.store_hash = config.get('store_hash', 0)
+        self.access_token = config.get('access_token', 0)
+        self.client_secret = config.get('client_secret', '')
+        self.client_id = config.get('client_id', '')
+
+        # Test values and throw errors accordingly
 
 
-    # @crochet.run_in_reactor
     def create_product(self, data):
         p = Product(data)
 
         p.modifiers['size'] = self._size_modifier(p.sizes, p.price)
         p.modifiers['color'] = self._color_modifier(p.swatch)
 
-        # return threads.deferToThread(self._upload_product, p)
-        return 'fafdsg'
+        # Put this in a thread
+
+        return self._upload_product(p)
 
 
     def _upload_product(self, product):
         upload = ProductUpload(self, product)
+
+        # Throw errors instead of returning response
+        # Or return dicts? This will be in a thread
 
         response = upload.post_product()
 
@@ -62,7 +65,7 @@ class BigCommerceStore():
 
             modifier.options.append({
                 'is_default': False,
-                'label': variant.get('size', '-'),
+                'label': variant.get('label', '-'),
                 'adjusters': modifier.adjusters[-1]
             })
 
@@ -72,16 +75,16 @@ class BigCommerceStore():
     def _color_modifier(self, swatch):
         modifier = Modifier('Color', 'swatch')
 
-        for i, color in enumerate(swatch):
-            if color != 'Thumbnail':
+        for i, swatch in enumerate(swatch):
+            if swatch.get('color') != 'Thumbnail':
                 modifier.adjusters.append({
-                    'image_url': swatch[color]
+                    'image_url': swatch.get('url')
                 })
 
                 modifier.options.append({
                     'sort_order': i,
                     'is_default': False,
-                    'label': color,
+                    'label': swatch.get('color'),
                     'adjusters': modifier.adjusters[-1],
                     'value_data': modifier.adjusters[-1]
                 })

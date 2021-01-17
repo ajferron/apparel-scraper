@@ -6,7 +6,7 @@ class Modifier():
         self.name = name 
         self.type = mod_type 
         self.required = required
-        
+
         self.adjusters = []
         self.options = []
 
